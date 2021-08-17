@@ -1,12 +1,28 @@
 #[macro_use]
+extern crate diesel;
+
+#[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
-}
+use diesel::prelude::*;
+use dotenv::dotenv;
+use rocket_sync_db_pools::database;
+
+mod api;
+mod models;
+mod schema;
+mod slack;
+
+use api::*;
+
+#[database("db")]
+struct DbConn(PgConnection);
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index])
+    dotenv().ok();
+
+    rocket::build()
+        .mount("/api", routes![auth::login, auth::code])
+        .attach(DbConn::fairing())
 }
