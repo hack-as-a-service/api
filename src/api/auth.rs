@@ -104,6 +104,5 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
             .finish(),
     );
 
-    // user.name.ok_or(Status::InternalServerError)
     Ok(Redirect::temporary("/"))
 }
