@@ -9,10 +9,10 @@ use crate::{
     DbConn,
 };
 
-pub struct HaaSUser(pub User);
+pub struct HaasUser(pub User);
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for HaaSUser {
+impl<'r> FromRequest<'r> for HaasUser {
     type Error = ();
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
