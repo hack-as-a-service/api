@@ -1,0 +1,5 @@
+# Unstable needed to use `ignore` (see https://rust-lang.github.io/rustfmt/#ignore)
+unstable_features = true
+
+# Ignore auto-generated files
+ignore = ["src/schema.rs"]
