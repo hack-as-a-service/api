@@ -36,6 +36,8 @@ pub async fn exchange_code(
 pub struct UserInfo {
     pub name: String,
     pub picture: String,
+    #[serde(rename(deserialize = "https://slack.com/user_id"))]
+    pub user_id: String,
 }
 
 pub async fn user_info(token: &str) -> Result<UserInfo, ()> {

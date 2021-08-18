@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use crate::schema::users;
 use rocket::serde::Serialize;
 
-#[derive(Debug, Queryable, Serialize)]
+#[derive(Debug, Queryable, Serialize, Identifiable)]
 pub struct User {
     pub id: i32,
     pub created_at: NaiveDateTime,

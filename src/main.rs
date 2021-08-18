@@ -6,6 +6,7 @@ extern crate rocket;
 
 use diesel::prelude::*;
 use dotenv::dotenv;
+use rocket::http::CookieJar;
 use rocket_sync_db_pools::database;
 
 mod api;
@@ -16,13 +17,21 @@ mod slack;
 use api::*;
 
 #[database("db")]
-struct DbConn(PgConnection);
+pub struct DbConn(PgConnection);
+
+#[get("/")]
+pub fn index(cookies: &CookieJar<'_>) -> Option<String> {
+    cookies
+        .get("haas_token")
+        .map(|crumb| format!("{}", crumb.value()))
+}
 
 #[launch]
 fn rocket() -> _ {
     dotenv().ok();
 
     rocket::build()
-        .mount("/api", routes![auth::login, auth::code])
+        .mount("/", routes![index])
+        .mount("/api", routes![auth::login, auth::logout, auth::code])
         .attach(DbConn::fairing())
 }
