@@ -18,11 +18,18 @@ impl<'r> FromRequest<'r> for HaaSUser {
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cookies = req.cookies();
 
+        // Check Authorization header and cookies
+        let token = req
+            .headers()
+            .get_one("Authorization")
+            .and_then(|e| e.strip_prefix("Bearer "))
+            .or_else(|| cookies.get("haas_token").map(|e| e.value()));
+
         // `?` only works on Option/Result types
         match DbConn::get_one(req.rocket()).await {
-            Some(conn) => match cookies.get("haas_token") {
+            Some(conn) => match token {
                 Some(_t) => {
-                    let t = _t.value().to_owned();
+                    let t = _t.to_owned();
 
                     let user = conn
                         .run(|c| {
@@ -30,7 +37,7 @@ impl<'r> FromRequest<'r> for HaaSUser {
                             use crate::schema::users::dsl::*;
 
                             tokens
-                                .filter(token.eq(t))
+                                .filter(token.eq(t).and(expires_at.gt(diesel::dsl::now)))
                                 .inner_join(users)
                                 .first::<(Token, User)>(c)
                                 .map(|e| e.1)
