@@ -19,7 +19,7 @@ mod slack;
 pub struct DbConn(PgConnection);
 
 #[get("/openapi")]
-pub async fn openapi() -> NamedFile {
+async fn openapi() -> NamedFile {
     NamedFile::open("openapi/openapi.yaml").await.unwrap()
 }
 
