@@ -6,4 +6,20 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.5.0-rc.1"
+chrono = {version = "0.4.19", features = ["serde"]}
+diesel = {version = "1.4.7", features = ["postgres", "chrono"]}
+dotenv = "0.15.0"
+hex = "0.4.3"
+rand = "0.8.4"
+reqwest = {version = "0.11.4", features = ["json"]}
+time = "0.2.25"
+
+rocket = {version = "0.5.0-rc.1", features = ["json"]}
+
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+
+[dependencies.rocket_sync_db_pools]
+default-features = false
+features = ["diesel_postgres_pool"]
+version = "0.1.0-rc.1"
