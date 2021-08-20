@@ -6,6 +6,7 @@ services:
       dockerfile: dev.Dockerfile
     volumes:
       - .:/usr/src/app
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       ROCKET_DATABASES: '{db = {url = "postgres://postgres:postgres@db:5432/postgres"}}'
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
