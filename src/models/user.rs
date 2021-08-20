@@ -6,6 +6,7 @@ use rocket::serde::Serialize;
 #[derive(Debug, Queryable, Serialize, Identifiable)]
 pub struct User {
     pub id: i32,
+    #[serde(skip_serializing)]
     pub created_at: NaiveDateTime,
     pub slack_user_id: String,
     pub name: Option<String>,

@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  title: Hack as a Service API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+paths:
+  /users/me:
+    get:
+      summary: Returns the currently authenticated user
+      tags:
+        - Users
+      responses:
+        "200": # status code
+          description: The currently authed user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "500":
+          description: Internal server error
+        "401":
+          description: Unauthorized
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: haas_token
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        slack_user_id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+      required:
+        - id
+        - slack_user_id
+      example:
+        id: 5
+        slack_user_id: U0266FRGP
+        name: Zach Latta
+        avatar: https://ca.slack-edge.com/T0266FRGM-U0266FRGP-db89498acd5d-192
