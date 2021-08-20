@@ -10,7 +10,6 @@ use rocket::fs::NamedFile;
 use rocket_sync_db_pools::database;
 
 mod api;
-mod auth;
 mod models;
 mod schema;
 mod slack;
