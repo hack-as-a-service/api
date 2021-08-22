@@ -18,7 +18,7 @@ WORKDIR /usr/src/app
 RUN apt-get update -y && apt-get install -y libssl1.1 libpq5
 
 COPY --from=builder /usr/src/app/target/release/haas_api .
-COPY --from=builder /usr/src/app/rocket.toml .
+COPY --from=builder /usr/src/app/Rocket.toml .
 COPY --from=builder /usr/src/app/openapi/openapi.yaml ./openapi/openapi.yaml
 
 CMD ["./haas_api"]
