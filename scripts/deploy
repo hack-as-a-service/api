@@ -32,8 +32,8 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
     cd ~/haas_api
 
     # Build some images
-    # docker build -t haas_api -f docker/prod.Dockerfile .
-    # docker build -t haas_migrator -f docker/migrator.Dockerfile .
+    docker build -t haas_api -f docker/prod.Dockerfile .
+    docker build -t haas_migrator -f docker/migrator.Dockerfile .
 
     # Migrate the DB schema
     echo -e "\nMigrating database..."
