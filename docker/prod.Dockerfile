@@ -2,6 +2,14 @@ FROM rust:1.54 AS builder
 
 WORKDIR /usr/src/app
 
+RUN cargo init
+
+COPY Cargo.toml Cargo.lock ./
+
+# Dummy build to cache dependencies where possible
+RUN cargo build --release
+
+COPY src src
 COPY . .
 
 RUN cargo build --release
