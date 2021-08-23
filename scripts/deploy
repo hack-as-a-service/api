@@ -45,6 +45,7 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
         --env-file ~/.env \
         --network haas_admin \
         --name haas_api_next \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         haas_api)
     
     HAAS_API_NEXT_IP=\$(docker inspect \$HAAS_API_NEXT | jq -r .[0].NetworkSettings.Networks.haas_admin.IPAddress)
