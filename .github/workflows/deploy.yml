@@ -1,0 +1,20 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - main
+      - deploy-workflow
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: mkdir -p ~/.ssh && echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+        name: Install SSH key
+      - run: ./scripts/deploy
+        name: Deploy API
+        env:
+          KEY_PATH: ~/.ssh/id_rsa
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          HAAS_IP: "167.99.113.134"
