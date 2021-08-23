@@ -1,7 +1,7 @@
 name: CI
-on: 
+on:
   push:
-      branches: [main]
+    branches: [main]
   pull_request:
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -68,3 +68,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          file: docker/prod.Dockerfile
