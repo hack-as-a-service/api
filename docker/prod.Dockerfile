@@ -9,6 +9,7 @@ COPY Cargo.toml Cargo.lock ./
 # Dummy build to cache dependencies where possible
 RUN cargo build --release
 
+COPY src src
 COPY . .
 
 RUN cargo build --release
