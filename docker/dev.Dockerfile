@@ -10,4 +10,6 @@ RUN cargo install diesel_cli --no-default-features --features postgres && \
 # Dummy build to fetch/compile dependencies
 RUN cargo build
 
+ENV RUST_LOG info
+
 CMD ["cargo", "watch", "-x", "run"]

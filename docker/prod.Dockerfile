@@ -24,4 +24,6 @@ COPY --from=builder /usr/src/app/target/release/haas_api .
 COPY --from=builder /usr/src/app/Rocket.toml .
 COPY --from=builder /usr/src/app/openapi/openapi.yaml ./openapi/openapi.yaml
 
+ENV RUST_LOG info
+
 CMD ["./haas_api"]
