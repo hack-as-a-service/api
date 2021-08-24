@@ -25,6 +25,7 @@ async fn openapi() -> NamedFile {
 #[launch]
 fn rocket() -> _ {
     dotenv().ok();
+    tracing_subscriber::fmt::init();
 
     rocket::build()
         .mount(
