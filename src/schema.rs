@@ -1,4 +1,21 @@
 table! {
+    team_users (team_id, user_id) {
+        user_id -> Int4,
+        team_id -> Int4,
+    }
+}
+
+table! {
+    teams (id) {
+        id -> Int4,
+        created_at -> Timestamp,
+        name -> Text,
+        avatar -> Nullable<Text>,
+        personal -> Bool,
+    }
+}
+
+table! {
     tokens (token) {
         token -> Text,
         created_at -> Timestamp,
@@ -17,6 +34,8 @@ table! {
     }
 }
 
+joinable!(team_users -> teams (team_id));
+joinable!(team_users -> users (user_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(tokens, users,);
+allow_tables_to_appear_in_same_query!(team_users, teams, tokens, users,);
