@@ -10,6 +10,8 @@ use time::Duration;
 
 use crate::{
     models::{
+        team::{NewTeam, Team},
+        team_user::TeamUser,
         token::{generate_token, NewToken, Token},
         user::{NewUser, User},
     },
@@ -65,20 +67,42 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
 
     let token = conn
         .run(|c| -> Result<Token, ()> {
+            use crate::schema::team_users::dsl::*;
+            use crate::schema::teams::dsl::*;
             use crate::schema::tokens::dsl::*;
             use crate::schema::users::dsl::*;
 
             let user = users
                 .filter(slack_user_id.eq(&info.user_id))
                 .first::<User>(c)
-                .or_else(|_| {
-                    diesel::insert_into(users)
+                .or_else(|_| -> QueryResult<User> {
+                    // Create user
+                    let user = diesel::insert_into(users)
                         .values(&NewUser {
                             slack_user_id: info.user_id,
-                            name: Some(info.name),
+                            name: Some(info.name.clone()),
                             avatar: Some(info.picture),
                         })
-                        .get_result::<User>(c)
+                        .get_result::<User>(c)?;
+
+                    // Create the user's personal team
+                    let team = diesel::insert_into(teams)
+                        .values(&NewTeam {
+                            name: format!("{}'s team", info.name),
+                            avatar: None,
+                            personal: true,
+                        })
+                        .get_result::<Team>(c)?;
+
+                    // Add the user to their personal team
+                    diesel::insert_into(team_users)
+                        .values(&TeamUser {
+                            team_id: team.id,
+                            user_id: user.id,
+                        })
+                        .execute(c)?;
+
+                    Ok(user)
                 })
                 .map_err(|_| ())?;
 

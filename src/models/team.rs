@@ -1,6 +1,6 @@
 use crate::schema::teams;
 use chrono::NaiveDateTime;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Queryable, Serialize, Identifiable)]
 pub struct Team {
@@ -12,10 +12,11 @@ pub struct Team {
     pub personal: bool,
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Deserialize)]
 #[table_name = "teams"]
 pub struct NewTeam {
     pub name: String,
     pub avatar: Option<String>,
+    #[serde(skip_deserializing)]
     pub personal: bool,
 }
