@@ -35,7 +35,8 @@ fn rocket() -> _ {
                 api::auth::logout,
                 api::auth::code,
                 api::teams::create,
-                api::users::me
+                api::users::me,
+                api::users::teams
             ],
         )
         .attach(DbConn::fairing())
