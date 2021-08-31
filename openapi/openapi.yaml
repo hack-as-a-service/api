@@ -26,6 +26,36 @@ paths:
           description: Internal server error
         "401":
           description: Unauthorized
+  /users/me/teams:
+    get:
+      summary: Fetch the current user's teams
+      tags:
+        - Users
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+                example:
+                  - id: 1
+                    name: Zach Latta's team
+                    personal: true
+                  - id: 8
+                    name: Hack as a Service
+                    avatar: https://doggo.ninja/dzippy.png
+                    personal: false
+                  - id: 5
+                    name: Hack Club HQ
+                    avatar: https://assets.hackclub.com/icon-progress-square.svg
+                    personal: false
+        "500":
+          description: Internal server error
+        "401":
+          description: Unauthorized
   /teams:
     post:
       summary: Create a team
