@@ -1,4 +1,3 @@
-use diesel::dsl::not;
 use diesel::prelude::*;
 use rocket::{http::Status, serde::json::Json};
 
@@ -19,7 +18,7 @@ pub async fn teams(user: User, conn: DbConn) -> Result<Json<Vec<Team>>, Status> 
         use crate::schema::teams::dsl::*;
 
         let loaded_teams = team_users
-            .filter(user_id.eq(user.id).and(not(personal)))
+            .filter(user_id.eq(user.id))
             .inner_join(teams)
             .load::<(TeamUser, Team)>(c)
             .map_err(|_| Status::InternalServerError)?;
