@@ -41,6 +41,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/Team"
                 example:
+                  - id: 1
+                    name: Zach Latta's team
+                    personal: true
                   - id: 8
                     name: Hack as a Service
                     avatar: https://doggo.ninja/dzippy.png
