@@ -43,13 +43,16 @@ paths:
                 example:
                   - id: 1
                     name: Zach Latta's team
+                    slug: wahoo-fish
                     personal: true
                   - id: 8
                     name: Hack as a Service
+                    slug: hack-as-a-service
                     avatar: https://doggo.ninja/dzippy.png
                     personal: false
                   - id: 5
                     name: Hack Club HQ
+                    slug: hackclub
                     avatar: https://assets.hackclub.com/icon-progress-square.svg
                     personal: false
         "500":
@@ -66,17 +69,11 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                avatar:
-                  type: string
-              required:
-                - name
-              example:
-                name: Hack as a Service
-                avatar: https://doggo.ninja/dzippy.png
+              $ref: "#/components/schemas/Team"
+            example:
+              slug: hack-as-a-service
+              name: Hack as a Service
+              avatar: https://doggo.ninja/dzippy.png
       responses:
         "201":
           description: Created
@@ -123,18 +120,23 @@ components:
       properties:
         id:
           type: integer
+          readOnly: true
         name:
+          type: string
+        slug:
           type: string
         avatar:
           type: string
         personal:
           type: boolean
+          readOnly: true
       required:
         - id
-        - name
+        - slug
         - personal
       example:
         id: 8
         name: Hack as a Service
+        slug: hack-as-a-service
         avatar: https://doggo.ninja/dzippy.png
         personal: false

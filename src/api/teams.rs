@@ -3,7 +3,7 @@ use rocket::{http::Status, serde::json::Json};
 
 use crate::{
     models::{
-        team::{NewTeam, Team},
+        team::{validate_slug, NewTeam, Team},
         team_user::TeamUser,
         user::User,
     },
@@ -12,6 +12,10 @@ use crate::{
 
 #[post("/teams", data = "<team>")]
 pub async fn create(user: User, team: Json<NewTeam>, conn: DbConn) -> Result<Json<Team>, Status> {
+    if !validate_slug(&team.slug) {
+        return Err(Status::UnprocessableEntity);
+    }
+
     conn.run(move |c| {
         use crate::schema::team_users::dsl::*;
         use crate::schema::teams::dsl::*;

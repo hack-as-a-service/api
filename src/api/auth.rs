@@ -1,6 +1,7 @@
 use std::env;
 
 use diesel::prelude::*;
+use names::Generator;
 use rocket::{
     http::{Cookie, CookieJar, SameSite, Status},
     response::Redirect,
@@ -88,7 +89,8 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
                     // Create the user's personal team
                     let team = diesel::insert_into(teams)
                         .values(&NewTeam {
-                            name: format!("{}'s team", info.name),
+                            name: Some(format!("{}'s team", info.name)),
+                            slug: Generator::default().next().unwrap(),
                             avatar: None,
                             personal: true,
                         })
