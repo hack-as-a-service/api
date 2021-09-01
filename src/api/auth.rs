@@ -1,7 +1,6 @@
 use std::env;
 
 use diesel::prelude::*;
-use names::Generator;
 use rocket::{
     http::{Cookie, CookieJar, SameSite, Status},
     response::Redirect,
@@ -11,7 +10,7 @@ use time::Duration;
 
 use crate::{
     models::{
-        team::{NewTeam, Team},
+        team::{into_slug, NewTeam, Team},
         team_user::TeamUser,
         token::{generate_token, NewToken, Token},
         user::{NewUser, User},
@@ -90,7 +89,7 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
                     let team = diesel::insert_into(teams)
                         .values(&NewTeam {
                             name: Some(format!("{}'s team", info.name)),
-                            slug: Generator::default().next().unwrap(),
+                            slug: into_slug(&info.name, true),
                             avatar: None,
                             personal: true,
                         })
