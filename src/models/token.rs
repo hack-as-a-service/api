@@ -4,6 +4,7 @@ use chrono::NaiveDateTime;
 
 #[derive(Debug, Queryable, Identifiable, Associations)]
 #[primary_key(token)]
+#[table_name = "tokens"]
 #[belongs_to(User)]
 pub struct Token {
     pub token: String,
