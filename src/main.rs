@@ -4,6 +4,9 @@ extern crate diesel;
 #[macro_use]
 extern crate rocket;
 
+#[macro_use]
+extern crate lazy_static;
+
 use diesel::prelude::*;
 use dotenv::dotenv;
 use rocket::fs::NamedFile;

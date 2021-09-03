@@ -10,7 +10,7 @@ use time::Duration;
 
 use crate::{
     models::{
-        team::{NewTeam, Team},
+        team::{into_slug, NewTeam, Team},
         team_user::TeamUser,
         token::{generate_token, NewToken, Token},
         user::{NewUser, User},
@@ -88,7 +88,8 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
                     // Create the user's personal team
                     let team = diesel::insert_into(teams)
                         .values(&NewTeam {
-                            name: format!("{}'s team", info.name),
+                            name: Some(format!("{}'s team", info.name)),
+                            slug: into_slug(&info.name, true),
                             avatar: None,
                             personal: true,
                         })

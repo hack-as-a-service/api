@@ -9,9 +9,10 @@ table! {
     teams (id) {
         id -> Int4,
         created_at -> Timestamp,
-        name -> Text,
+        name -> Nullable<Text>,
         avatar -> Nullable<Text>,
         personal -> Bool,
+        slug -> Text,
     }
 }
 
