@@ -77,7 +77,7 @@ pub async fn team(team_slug: String, user: User, conn: DbConn) -> Result<Json<Te
 #[get("/teams/<team_slug>/users")]
 pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<User>>, Status> {
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::{team_users, user_id};
+        use crate::schema::team_users::dsl::{team_id, team_users, user_id};
         use crate::schema::teams::dsl::{slug, teams};
         use crate::schema::users::dsl::users;
 
@@ -96,12 +96,12 @@ pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<V
             })?;
 
         // Fetch the team's users
-        let loaded_users: Vec<User> = teams
-            .find(team.id)
-            .inner_join(team_users.inner_join(users))
-            .load::<(Team, (TeamUser, User))>(c)
-            .map_err(|_| Status::InternalServerError)
-            .map(|u| u.into_iter().map(|u| u.1 .1).collect())?;
+        let loaded_users: Vec<User> = team_users
+            .filter(team_id.eq(team.id))
+            .inner_join(users)
+            .load::<(TeamUser, User)>(c)
+            .map(|u| u.into_iter().map(|u| u.1).collect())
+            .map_err(|_| Status::InternalServerError)?;
 
         Ok(Json(loaded_users))
     })
