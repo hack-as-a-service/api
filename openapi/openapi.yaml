@@ -43,7 +43,7 @@ paths:
                 example:
                   - id: 1
                     name: Zach Latta's team
-                    slug: wahoo-fish
+                    slug: zach-latta-4852
                     personal: true
                   - id: 8
                     name: Hack as a Service
@@ -83,6 +83,69 @@ paths:
                 $ref: "#/components/schemas/Team"
         "500":
           description: Internal server error
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+  /teams/{slug}:
+    get:
+      summary: Fetch a team
+      tags:
+        - Teams
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: hack-as-a-service
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "500":
+          description: Internal server error
+        "404":
+          description: Team not found
+        "401":
+          description: Unauthorized
+  /teams/{slug}/users:
+    get:
+      summary: Fetch a team's users
+      tags:
+        - Teams
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: hack-as-a-service
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+                example:
+                  - id: 5
+                    slack_user_id: U0266FRGP
+                    name: Zach Latta
+                    avatar: https://ca.slack-edge.com/T0266FRGM-U0266FRGP-db89498acd5d-192
+                  - id: 4
+                    slack_user_id: U013B6CPV62
+                    name: Caleb Denio
+                    avatar: https://avatars.slack-edge.com/2021-09-02/2437082298583_2f2915106fbaf3a01afc_512.png
+        "500":
+          description: Internal server error
+        "404":
+          description: Team not found
         "401":
           description: Unauthorized
 
