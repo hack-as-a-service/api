@@ -1,4 +1,15 @@
 table! {
+    apps (id) {
+        id -> Int4,
+        created_at -> Timestamp,
+        slug -> Text,
+        team_id -> Int4,
+        enabled -> Bool,
+        container_id -> Nullable<Text>,
+    }
+}
+
+table! {
     team_users (team_id, user_id) {
         user_id -> Int4,
         team_id -> Int4,
@@ -35,8 +46,9 @@ table! {
     }
 }
 
+joinable!(apps -> teams (team_id));
 joinable!(team_users -> teams (team_id));
 joinable!(team_users -> users (user_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(team_users, teams, tokens, users,);
+allow_tables_to_appear_in_same_query!(apps, team_users, teams, tokens, users,);
