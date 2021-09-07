@@ -30,7 +30,7 @@ table! {
         id -> Int4,
         created_at -> Timestamp,
         slack_user_id -> Text,
-        name -> Nullable<Text>,
+        name -> Text,
         avatar -> Nullable<Text>,
     }
 }

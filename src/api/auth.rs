@@ -80,7 +80,7 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
                     let user = diesel::insert_into(users)
                         .values(&NewUser {
                             slack_user_id: info.user_id,
-                            name: Some(info.name.clone()),
+                            name: info.name.clone(),
                             avatar: Some(info.picture),
                         })
                         .get_result::<User>(c)?;

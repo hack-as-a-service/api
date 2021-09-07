@@ -14,7 +14,7 @@ pub struct User {
     #[serde(skip_serializing)]
     pub created_at: NaiveDateTime,
     pub slack_user_id: String,
-    pub name: Option<String>,
+    pub name: String,
     pub avatar: Option<String>,
 }
 
@@ -22,7 +22,7 @@ pub struct User {
 #[table_name = "users"]
 pub struct NewUser {
     pub slack_user_id: String,
-    pub name: Option<String>,
+    pub name: String,
     pub avatar: Option<String>,
 }
 

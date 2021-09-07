@@ -173,6 +173,7 @@ components:
       required:
         - id
         - slack_user_id
+        - name
       example:
         id: 5
         slack_user_id: U0266FRGP
