@@ -33,6 +33,15 @@ jobs:
           toolchain: stable
       - name: Build
         run: cargo build
+  lint-docker:
+    runs-on: ubuntu-latest
+    container: hadolint/hadolint:latest-debian
+    name: Lint (Dockerfile)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Lint Dockerfile
+        run: hadolint docker/*.Dockerfile
   push:
     # Ensure test job passes before pushing image.
     needs: build
