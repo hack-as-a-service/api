@@ -32,7 +32,7 @@ pub async fn exchange_code(
     resp.access_token
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct UserInfo {
     pub name: String,
     pub picture: String,

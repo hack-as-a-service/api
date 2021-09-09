@@ -46,9 +46,15 @@ table! {
     }
 }
 
+table! {
+    whitelist (slack_user_id) {
+        slack_user_id -> Text,
+    }
+}
+
 joinable!(apps -> teams (team_id));
 joinable!(team_users -> teams (team_id));
 joinable!(team_users -> users (user_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(apps, team_users, teams, tokens, users,);
+allow_tables_to_appear_in_same_query!(apps, team_users, teams, tokens, users, whitelist,);

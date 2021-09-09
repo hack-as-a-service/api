@@ -14,6 +14,7 @@ use crate::{
         team_user::TeamUser,
         token::{generate_token, NewToken, Token},
         user::{NewUser, User},
+        whitelist::WhitelistEntry,
     },
     slack::{exchange_code, user_info},
     DbConn,
@@ -64,6 +65,26 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
     let info = user_info(&access_token)
         .await
         .map_err(|_| Status::InternalServerError)?;
+
+    let whitelisted = if env::var("HAAS_PRODUCTION").is_err() {
+        true
+    } else {
+        let info = info.clone();
+
+        conn.run(|c| {
+            use crate::schema::whitelist::dsl::*;
+
+            whitelist
+                .find(info.user_id)
+                .first::<WhitelistEntry>(c)
+                .is_ok()
+        })
+        .await
+    };
+
+    if !whitelisted {
+        return Err(Status::Forbidden);
+    }
 
     let token = conn
         .run(|c| -> Result<Token, ()> {
