@@ -9,6 +9,7 @@ use rocket::{http::Status, serde::json::Json};
 
 use crate::{
     models::{
+        app::App,
         team::{validate_slug, NewTeam, Team},
         team_user::TeamUser,
         user::User,
@@ -104,6 +105,36 @@ pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<V
             .map_err(|_| Status::InternalServerError)?;
 
         Ok(Json(loaded_users))
+    })
+    .await
+}
+
+#[get("/teams/<team_slug>/apps")]
+pub async fn apps(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<App>>, Status> {
+    conn.run(move |c| {
+        use crate::schema::team_users::dsl::{team_users, user_id};
+        use crate::schema::teams::dsl::{slug, teams};
+
+        // Fetch the team
+        let team = teams
+            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
+            .inner_join(team_users)
+            .first::<(Team, TeamUser)>(c)
+            .map(|x| x.0)
+            .map_err(|e| {
+                if e == NotFound {
+                    Status::NotFound
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        // Fetch the team's apps
+        let loaded_apps = App::belonging_to(&team)
+            .load::<App>(c)
+            .map_err(|_| Status::InternalServerError)?;
+
+        Ok(Json(loaded_apps))
     })
     .await
 }

@@ -37,6 +37,7 @@ fn rocket() -> _ {
                 api::auth::login,
                 api::auth::logout,
                 api::auth::code,
+                api::teams::apps,
                 api::teams::create,
                 api::teams::team,
                 api::teams::users,

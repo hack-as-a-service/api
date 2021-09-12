@@ -150,6 +150,44 @@ paths:
           description: Team not found
         "401":
           description: Unauthorized
+  /teams/{slug}/apps:
+    get:
+      summary: Fetch a team's apps
+      tags:
+        - Apps
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: hack-as-a-service
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/App"
+                example:
+                  - id: 5
+                    team_id: 6
+                    created_at: "2021-09-07T22:52:53.381574"
+                    slug: dinopoll
+                    enabled: true
+                  - id: 8
+                    team_id: 6
+                    created_at: "2021-09-07T22:52:53.381574"
+                    slug: scrappy
+                    enabled: true
+        "500":
+          description: Internal server error
+        "404":
+          description: Team not found
+        "401":
+          description: Unauthorized
 
 components:
   securitySchemes:
@@ -206,3 +244,30 @@ components:
         slug: hack-as-a-service
         avatar: https://doggo.ninja/dzippy.png
         personal: false
+    App:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        team_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        slug:
+          type: string
+        enabled:
+          type: boolean
+      required:
+        - id
+        - team_id
+        - created_at
+        - slug
+        - enabled
+      example:
+        id: 5
+        team_id: 6
+        created_at: "2021-09-07T22:52:53.381574"
+        slug: dinopoll
+        enabled: true
