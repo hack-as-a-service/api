@@ -17,6 +17,28 @@ use crate::{
     DbConn,
 };
 
+/// Fetches a team by the `slug`, which can either be a Team.slug or a numeric Team.id
+fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> QueryResult<Team> {
+    use crate::schema::team_users;
+    use crate::schema::teams::dsl::*;
+
+    // Attempt to parse out a numeric ID
+    let team = match team_slug.parse::<i32>() {
+        Ok(i) => teams
+            .filter(id.eq(i).and(team_users::user_id.eq(user_id)))
+            .inner_join(team_users::table)
+            .first::<(Team, TeamUser)>(c)
+            .map(|x| x.0)?,
+        Err(_) => teams
+            .filter(slug.eq(team_slug).and(team_users::user_id.eq(user_id)))
+            .inner_join(team_users::table)
+            .first::<(Team, TeamUser)>(c)
+            .map(|x| x.0)?,
+    };
+
+    Ok(team)
+}
+
 #[post("/teams", data = "<team>")]
 pub async fn create(user: User, team: Json<NewTeam>, conn: DbConn) -> Result<Json<Team>, Status> {
     if !validate_slug(&team.slug) {
@@ -54,21 +76,13 @@ pub async fn create(user: User, team: Json<NewTeam>, conn: DbConn) -> Result<Jso
 #[get("/teams/<team_slug>")]
 pub async fn team(team_slug: String, user: User, conn: DbConn) -> Result<Json<Team>, Status> {
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::{slug, teams};
-
-        let team = teams
-            .filter(slug.eq(team_slug).and(user_id.eq(user.id)))
-            .inner_join(team_users)
-            .first::<(Team, TeamUser)>(c)
-            .map_err(|e| {
-                if e == NotFound {
-                    Status::NotFound
-                } else {
-                    Status::InternalServerError
-                }
-            })
-            .map(|x| x.0)?;
+        let team = fetch_team(team_slug, user.id, c).map_err(|e| {
+            if e == NotFound {
+                Status::NotFound
+            } else {
+                Status::InternalServerError
+            }
+        })?;
 
         Ok(Json(team))
     })
@@ -78,23 +92,17 @@ pub async fn team(team_slug: String, user: User, conn: DbConn) -> Result<Json<Te
 #[get("/teams/<team_slug>/users")]
 pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<User>>, Status> {
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::{team_id, team_users, user_id};
-        use crate::schema::teams::dsl::{slug, teams};
+        use crate::schema::team_users::dsl::{team_id, team_users};
         use crate::schema::users::dsl::users;
 
         // Fetch the team
-        let team = teams
-            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
-            .inner_join(team_users)
-            .first::<(Team, TeamUser)>(c)
-            .map(|x| x.0)
-            .map_err(|e| {
-                if e == NotFound {
-                    Status::NotFound
-                } else {
-                    Status::InternalServerError
-                }
-            })?;
+        let team = fetch_team(team_slug, user.id, c).map_err(|e| {
+            if e == NotFound {
+                Status::NotFound
+            } else {
+                Status::InternalServerError
+            }
+        })?;
 
         // Fetch the team's users
         let loaded_users: Vec<User> = team_users
@@ -112,22 +120,14 @@ pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<V
 #[get("/teams/<team_slug>/apps")]
 pub async fn apps(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<App>>, Status> {
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::{slug, teams};
-
         // Fetch the team
-        let team = teams
-            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
-            .inner_join(team_users)
-            .first::<(Team, TeamUser)>(c)
-            .map(|x| x.0)
-            .map_err(|e| {
-                if e == NotFound {
-                    Status::NotFound
-                } else {
-                    Status::InternalServerError
-                }
-            })?;
+        let team = fetch_team(team_slug, user.id, c).map_err(|e| {
+            if e == NotFound {
+                Status::NotFound
+            } else {
+                Status::InternalServerError
+            }
+        })?;
 
         // Fetch the team's apps
         let loaded_apps = App::belonging_to(&team)
