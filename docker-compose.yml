@@ -1,11 +1,12 @@
 version: "3"
 services:
   main:
-    build:
-      context: .
-      dockerfile: docker/dev.Dockerfile
+    #build:
+    #  context: .
+    #  dockerfile: docker/dev.Dockerfile
+    image: haas-api:7qnq8lja69fzwxdavnmphjlbs5im6y9i
     volumes:
-      - .:/usr/src/app
+      #- .:/usr/src/app
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       ROCKET_DATABASES: '{db = {url = "postgres://postgres:postgres@db:5432/postgres"}}'
