@@ -10,3 +10,6 @@
 **/*.rs.bk
 
 *.env
+
+# direnv
+.direnv/
