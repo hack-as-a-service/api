@@ -6,6 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     rust2nix = {
       url = "github:anirudhb/rust2nix";
+      #url = "path:../../rust2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     fenix = {
