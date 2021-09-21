@@ -10,13 +10,14 @@ use time::Duration;
 
 use crate::{
     models::{
-        team::{into_slug, NewTeam, Team},
+        team::{NewTeam, Team},
         team_user::TeamUser,
         token::{generate_token, NewToken, Token},
         user::{NewUser, User},
         whitelist::WhitelistEntry,
     },
     slack::{exchange_code, user_info},
+    utils::slug::into_slug,
     DbConn,
 };
 

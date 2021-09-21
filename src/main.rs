@@ -16,6 +16,7 @@ mod api;
 mod models;
 mod schema;
 mod slack;
+mod utils;
 
 #[database("db")]
 pub struct DbConn(PgConnection);

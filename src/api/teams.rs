@@ -10,10 +10,11 @@ use rocket::{http::Status, serde::json::Json};
 use crate::{
     models::{
         app::App,
-        team::{validate_slug, NewTeam, Team},
+        team::{NewTeam, Team},
         team_user::TeamUser,
         user::User,
     },
+    utils::slug::validate_slug,
     DbConn,
 };
 
