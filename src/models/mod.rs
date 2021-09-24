@@ -1,4 +1,5 @@
 pub mod app;
+pub mod domain;
 pub mod team;
 pub mod team_user;
 pub mod token;

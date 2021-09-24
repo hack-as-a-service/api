@@ -10,6 +10,15 @@ table! {
 }
 
 table! {
+    domains (id) {
+        id -> Int4,
+        domain -> Text,
+        verified -> Bool,
+        app_id -> Int4,
+    }
+}
+
+table! {
     team_users (team_id, user_id) {
         user_id -> Int4,
         team_id -> Int4,
@@ -53,8 +62,9 @@ table! {
 }
 
 joinable!(apps -> teams (team_id));
+joinable!(domains -> apps (app_id));
 joinable!(team_users -> teams (team_id));
 joinable!(team_users -> users (user_id));
 joinable!(tokens -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(apps, team_users, teams, tokens, users, whitelist,);
+allow_tables_to_appear_in_same_query!(apps, domains, team_users, teams, tokens, users, whitelist,);
