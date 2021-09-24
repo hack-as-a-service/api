@@ -154,7 +154,7 @@ paths:
     get:
       summary: Fetch a team's apps
       tags:
-        - Apps
+        - Teams
       parameters:
         - in: path
           name: slug
@@ -227,7 +227,58 @@ paths:
           description: Unauthorized
         "409":
           description: Conflict
-
+  /apps/{slug}:
+    get:
+      summary: Fetch an app
+      tags:
+        - Apps
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: dinopoll
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/App"
+        "500":
+          description: Internal server error
+        "404":
+          description: App not found
+        "401":
+          description: Unauthorized
+  /apps/{slug}/domains:
+    get:
+      summary: Fetch an app's domains
+      tags:
+        - Apps
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: dinopoll
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Domain"
+        "500":
+          description: Internal server error
+        "404":
+          description: App not found
+        "401":
+          description: Unauthorized
 components:
   securitySchemes:
     cookieAuth:
@@ -310,3 +361,27 @@ components:
         created_at: "2021-09-07T22:52:53.381574"
         slug: dinopoll
         enabled: true
+    Domain:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        domain:
+          type: string
+        verified:
+          type: boolean
+          readOnly: true
+        app_id:
+          type: integer
+          readOnly: true
+      required:
+        - id
+        - domain
+        - verified
+        - app_id
+      example:
+        id: 7
+        app_id: 5
+        domain: dinopoll.hackclub.app
+        verified: true

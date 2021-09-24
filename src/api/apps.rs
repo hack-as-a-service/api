@@ -11,7 +11,7 @@ use rocket::{http::Status, serde::json::Json};
 use crate::{
     models::{
         app::{App, NewApp},
-        domain::NewDomain,
+        domain::{Domain, NewDomain},
         team::Team,
         team_user::TeamUser,
         user::User,
@@ -27,7 +27,7 @@ pub async fn app(app_slug: String, user: User, conn: DbConn) -> Result<Json<App>
         use crate::schema::team_users::dsl::{team_users, user_id};
         use crate::schema::teams::dsl::teams;
 
-        let loaded_app = apps
+        let app = apps
             .inner_join(teams.inner_join(team_users))
             .filter(user_id.eq(user.id).and(slug.eq(app_slug)))
             .first::<(App, (Team, TeamUser))>(c)
@@ -39,7 +39,7 @@ pub async fn app(app_slug: String, user: User, conn: DbConn) -> Result<Json<App>
                 }
             })?;
 
-        Ok(Json(loaded_app.0))
+        Ok(Json(app.0))
     })
     .await
 }
@@ -103,6 +103,38 @@ pub async fn create(
         })?;
 
         Ok(Json(app))
+    })
+    .await
+}
+
+#[get("/apps/<app_slug>/domains")]
+pub async fn domains(
+    app_slug: String,
+    user: User,
+    conn: DbConn,
+) -> Result<Json<Vec<Domain>>, Status> {
+    conn.run(move |c| {
+        use crate::schema::apps::dsl::{apps, slug};
+        use crate::schema::team_users::dsl::{team_users, user_id};
+        use crate::schema::teams::dsl::teams;
+
+        let app = apps
+            .inner_join(teams.inner_join(team_users))
+            .filter(user_id.eq(user.id).and(slug.eq(app_slug)))
+            .first::<(App, (Team, TeamUser))>(c)
+            .map_err(|e| {
+                if e == NotFound {
+                    Status::NotFound
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        let domains = Domain::belonging_to(&app.0)
+            .load::<Domain>(c)
+            .map_err(|_| Status::InternalServerError)?;
+
+        Ok(Json(domains))
     })
     .await
 }
