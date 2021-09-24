@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Queryable, Serialize, Identifiable, Associations)]
 #[belongs_to(Team)]
 pub struct App {
-    id: i32,
-    created_at: NaiveDateTime,
-    slug: String,
-    team_id: i32,
-    enabled: bool,
+    pub id: i32,
+    pub created_at: NaiveDateTime,
+    pub slug: String,
+    pub team_id: i32,
+    pub enabled: bool,
     #[serde(skip_serializing)]
-    container_id: Option<String>,
+    pub container_id: Option<String>,
 }
 
 #[derive(Insertable, Deserialize, Debug)]
