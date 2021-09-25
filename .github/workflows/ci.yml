@@ -3,9 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-env:
-  IMAGE_NAME: ${{ github.repository }}
-  REGISTRY: ghcr.io
+
 jobs:
   format:
     name: Format
