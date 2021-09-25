@@ -279,6 +279,48 @@ paths:
           description: App not found
         "401":
           description: Unauthorized
+    post:
+      summary: Add a custom domain to an app
+      tags:
+        - Apps
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: dinopoll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain:
+                  type: string
+              required:
+                - domain
+              example:
+                domain: hackclub.com
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Domain"
+        "500":
+          description: Internal server error
+        "409":
+          description: Conflict
+        "404":
+          description: App not found
+        "401":
+          description: Unauthorized
+
 components:
   securitySchemes:
     cookieAuth:
