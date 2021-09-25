@@ -6,6 +6,7 @@ on:
       - deploy-workflow
 jobs:
   api:
+    needs: docker
     name: API
     runs-on: ubuntu-latest
     steps:

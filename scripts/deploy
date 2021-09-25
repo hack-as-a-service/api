@@ -31,13 +31,15 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 
     cd ~/haas_api
 
-    # Build some images
-    docker build -t haas_api -f docker/prod.Dockerfile .
+    # Build the migrator
     docker build -t haas_migrator -f docker/migrator.Dockerfile .
 
     # Migrate the DB schema
     echo -e "\nMigrating database..."
     docker run --rm -e "DATABASE_URL=$DATABASE_URL" --network haas_admin haas_migrator
+
+    echo -e "\nPulling latest image..."
+    docker pull ghcr.io/hack-as-a-service/api:main
 
     echo -e "\nCreating haas_api_next..."
     HAAS_API_NEXT=\$(docker run -d \
@@ -46,7 +48,7 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
         --network haas_admin \
         --name haas_api_next \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        haas_api)
+        ghcr.io/hack-as-a-service/api:main)
     
     HAAS_API_NEXT_IP=\$(docker inspect \$HAAS_API_NEXT | jq -r .[0].NetworkSettings.Networks.haas_admin.IPAddress)
 
