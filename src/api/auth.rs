@@ -8,16 +8,20 @@ use rocket::{
 
 use time::Duration;
 
+use db_models::{
+    NewTeam, Team,
+    TeamUser,
+    NewToken, Token,
+    NewUser, User,
+    WhitelistEntry,
+};
+
 use crate::{
-    models::{
-        team::{NewTeam, Team},
-        team_user::TeamUser,
-        token::{generate_token, NewToken, Token},
-        user::{NewUser, User},
-        whitelist::WhitelistEntry,
-    },
     slack::{exchange_code, user_info},
-    utils::slug::into_slug,
+    utils::{
+        slug::into_slug,
+        token::generate_token,
+    },
     DbConn,
 };
 
@@ -89,10 +93,10 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
 
     let token = conn
         .run(|c| -> Result<Token, ()> {
-            use crate::schema::team_users::dsl::*;
-            use crate::schema::teams::dsl::*;
-            use crate::schema::tokens::dsl::*;
-            use crate::schema::users::dsl::*;
+            use db_models::schema::team_users::dsl::*;
+            use db_models::schema::teams::dsl::*;
+            use db_models::schema::tokens::dsl::*;
+            use db_models::schema::users::dsl::*;
 
             let user = users
                 .filter(slack_user_id.eq(&info.user_id))

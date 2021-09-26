@@ -8,24 +8,25 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
+use db_models::{
+    App, NewApp,
+    Domain, NewDomain,
+    Team,
+    TeamUser,
+};
+
 use crate::{
-    models::{
-        app::{App, NewApp},
-        domain::{Domain, NewDomain},
-        team::Team,
-        team_user::TeamUser,
-        user::User,
-    },
+    auth::AuthUser,
     utils::slug::validate_slug,
     DbConn,
 };
 
 #[get("/apps/<app_slug>")]
-pub async fn app(app_slug: String, user: User, conn: DbConn) -> Result<Json<App>, Status> {
+pub async fn app(app_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<App>, Status> {
     conn.run(move |c| {
-        use crate::schema::apps::dsl::{apps, slug};
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::teams;
+        use db_models::schema::apps::dsl::{apps, slug};
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::teams;
 
         let app = apps
             .inner_join(teams.inner_join(team_users))
@@ -46,7 +47,7 @@ pub async fn app(app_slug: String, user: User, conn: DbConn) -> Result<Json<App>
 
 #[post("/teams/<team_slug>/apps", data = "<app>")]
 pub async fn create(
-    user: User,
+    user: AuthUser,
     team_slug: String,
     app: Json<NewApp>,
     conn: DbConn,
@@ -56,10 +57,10 @@ pub async fn create(
     }
 
     conn.run(move |c| {
-        use crate::schema::apps::dsl::apps;
-        use crate::schema::domains::dsl::domains;
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::{slug, teams};
+        use db_models::schema::apps::dsl::apps;
+        use db_models::schema::domains::dsl::domains;
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::{slug, teams};
 
         // Fetch the team
         let (team, _) = teams
@@ -110,13 +111,13 @@ pub async fn create(
 #[get("/apps/<app_slug>/domains")]
 pub async fn domains(
     app_slug: String,
-    user: User,
+    user: AuthUser,
     conn: DbConn,
 ) -> Result<Json<Vec<Domain>>, Status> {
     conn.run(move |c| {
-        use crate::schema::apps::dsl::{apps, slug};
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::teams;
+        use db_models::schema::apps::dsl::{apps, slug};
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::teams;
 
         let app = apps
             .inner_join(teams.inner_join(team_users))

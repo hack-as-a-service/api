@@ -7,21 +7,23 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
+use db_models::{
+    App,
+    NewTeam, Team,
+    TeamUser,
+    User,
+};
+
 use crate::{
-    models::{
-        app::App,
-        team::{NewTeam, Team},
-        team_user::TeamUser,
-        user::User,
-    },
+    auth::AuthUser,
     utils::slug::validate_slug,
     DbConn,
 };
 
 /// Fetches a team by the `slug`, which can either be a Team.slug or a numeric Team.id
 fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> QueryResult<Team> {
-    use crate::schema::team_users;
-    use crate::schema::teams::dsl::*;
+    use db_models::schema::team_users;
+    use db_models::schema::teams::dsl::*;
 
     // Attempt to parse out a numeric ID
     let team = match team_slug.parse::<i32>() {
@@ -41,14 +43,14 @@ fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> Quer
 }
 
 #[post("/teams", data = "<team>")]
-pub async fn create(user: User, team: Json<NewTeam>, conn: DbConn) -> Result<Json<Team>, Status> {
+pub async fn create(user: AuthUser, team: Json<NewTeam>, conn: DbConn) -> Result<Json<Team>, Status> {
     if !validate_slug(&team.slug) {
         return Err(Status::UnprocessableEntity);
     }
 
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::*;
-        use crate::schema::teams::dsl::*;
+        use db_models::schema::team_users::dsl::*;
+        use db_models::schema::teams::dsl::*;
 
         let created_team = diesel::insert_into(teams)
             .values(team.0)
@@ -75,7 +77,7 @@ pub async fn create(user: User, team: Json<NewTeam>, conn: DbConn) -> Result<Jso
 }
 
 #[get("/teams/<team_slug>")]
-pub async fn team(team_slug: String, user: User, conn: DbConn) -> Result<Json<Team>, Status> {
+pub async fn team(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<Team>, Status> {
     conn.run(move |c| {
         let team = fetch_team(team_slug, user.id, c).map_err(|e| {
             if e == NotFound {
@@ -91,10 +93,10 @@ pub async fn team(team_slug: String, user: User, conn: DbConn) -> Result<Json<Te
 }
 
 #[get("/teams/<team_slug>/users")]
-pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<User>>, Status> {
+pub async fn users(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<Vec<User>>, Status> {
     conn.run(move |c| {
-        use crate::schema::team_users::dsl::{team_id, team_users};
-        use crate::schema::users::dsl::users;
+        use db_models::schema::team_users::dsl::{team_id, team_users};
+        use db_models::schema::users::dsl::users;
 
         // Fetch the team
         let team = fetch_team(team_slug, user.id, c).map_err(|e| {
@@ -119,7 +121,7 @@ pub async fn users(team_slug: String, user: User, conn: DbConn) -> Result<Json<V
 }
 
 #[get("/teams/<team_slug>/apps")]
-pub async fn apps(team_slug: String, user: User, conn: DbConn) -> Result<Json<Vec<App>>, Status> {
+pub async fn apps(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<Vec<App>>, Status> {
     conn.run(move |c| {
         // Fetch the team
         let team = fetch_team(team_slug, user.id, c).map_err(|e| {

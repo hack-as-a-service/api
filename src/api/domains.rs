@@ -7,14 +7,16 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
+use db_models::{
+    App,
+    Domain, NewDomain,
+    Team,
+    TeamUser,
+};
+
 use crate::{
-    models::{
-        app::App,
-        domain::{validate_domain, Domain, NewDomain},
-        team::Team,
-        team_user::TeamUser,
-        user::User,
-    },
+    auth::AuthUser,
+    utils::domain::validate_domain,
     DbConn,
 };
 
@@ -22,7 +24,7 @@ use crate::{
 pub async fn create(
     app_slug: String,
     domain: Json<NewDomain>,
-    user: User,
+    user: AuthUser,
     conn: DbConn,
 ) -> Result<Json<Domain>, Status> {
     if !validate_domain(&domain.domain) {
@@ -30,10 +32,10 @@ pub async fn create(
     }
 
     conn.run(move |c| {
-        use crate::schema::apps::dsl::{apps, slug};
-        use crate::schema::domains::dsl::domains;
-        use crate::schema::team_users::dsl::{team_users, user_id};
-        use crate::schema::teams::dsl::teams;
+        use db_models::schema::apps::dsl::{apps, slug};
+        use db_models::schema::domains::dsl::domains;
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::teams;
 
         let (app, _) = apps
             .inner_join(teams.inner_join(team_users))
