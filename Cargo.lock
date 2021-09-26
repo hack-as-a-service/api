@@ -491,6 +491,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "haas_provisioner"
+version = "0.1.0"
+
+[[package]]
+name = "haas_provisioner_cli"
+version = "0.1.0"
+
+[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

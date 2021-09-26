@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 COPY --from=builder /usr/src/app/target/release/haas_api .
 COPY --from=builder /usr/src/app/Rocket.toml .
-COPY --from=builder /usr/src/app/openapi/openapi.yaml ./openapi/openapi.yaml
 
 ENV RUST_LOG info
 

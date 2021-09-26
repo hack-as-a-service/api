@@ -9,7 +9,6 @@ extern crate lazy_static;
 
 use diesel::prelude::*;
 use dotenv::dotenv;
-use rocket::fs::NamedFile;
 use rocket_sync_db_pools::database;
 
 mod api;
@@ -22,8 +21,8 @@ mod utils;
 pub struct DbConn(PgConnection);
 
 #[get("/openapi.yaml")]
-async fn openapi() -> NamedFile {
-    NamedFile::open("openapi/openapi.yaml").await.unwrap()
+async fn openapi() -> &'static str {
+    include_str!("../openapi/openapi.yaml")
 }
 
 #[launch]
