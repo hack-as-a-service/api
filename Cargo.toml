@@ -26,3 +26,8 @@ db_models = {package = "haas_db_models", path = "crates/db_models"}
 default-features = false
 features = ["diesel_postgres_pool"]
 version = "0.1.0-rc.1"
+
+[workspace]
+members = [
+	"crates/*"
+]
