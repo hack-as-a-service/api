@@ -19,6 +19,7 @@
         nativeBuildInputs = with pkgs; [
           fenixPkgs.stable.defaultToolchain
           fenixPkgs.rust-analyzer
+          diesel-cli
         ];
       };
     });
