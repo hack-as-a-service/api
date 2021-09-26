@@ -7,18 +7,9 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
-use db_models::{
-    App,
-    NewTeam, Team,
-    TeamUser,
-    User,
-};
+use db_models::{App, NewTeam, Team, TeamUser, User};
 
-use crate::{
-    auth::AuthUser,
-    utils::slug::validate_slug,
-    DbConn,
-};
+use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
 
 /// Fetches a team by the `slug`, which can either be a Team.slug or a numeric Team.id
 fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> QueryResult<Team> {
@@ -43,7 +34,11 @@ fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> Quer
 }
 
 #[post("/teams", data = "<team>")]
-pub async fn create(user: AuthUser, team: Json<NewTeam>, conn: DbConn) -> Result<Json<Team>, Status> {
+pub async fn create(
+    user: AuthUser,
+    team: Json<NewTeam>,
+    conn: DbConn,
+) -> Result<Json<Team>, Status> {
     if !validate_slug(&team.slug) {
         return Err(Status::UnprocessableEntity);
     }
@@ -93,7 +88,11 @@ pub async fn team(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Jso
 }
 
 #[get("/teams/<team_slug>/users")]
-pub async fn users(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<Vec<User>>, Status> {
+pub async fn users(
+    team_slug: String,
+    user: AuthUser,
+    conn: DbConn,
+) -> Result<Json<Vec<User>>, Status> {
     conn.run(move |c| {
         use db_models::schema::team_users::dsl::{team_id, team_users};
         use db_models::schema::users::dsl::users;
@@ -121,7 +120,11 @@ pub async fn users(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Js
 }
 
 #[get("/teams/<team_slug>/apps")]
-pub async fn apps(team_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<Vec<App>>, Status> {
+pub async fn apps(
+    team_slug: String,
+    user: AuthUser,
+    conn: DbConn,
+) -> Result<Json<Vec<App>>, Status> {
     conn.run(move |c| {
         // Fetch the team
         let team = fetch_team(team_slug, user.id, c).map_err(|e| {

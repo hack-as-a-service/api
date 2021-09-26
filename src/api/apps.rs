@@ -8,18 +8,9 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
-use db_models::{
-    App, NewApp,
-    Domain, NewDomain,
-    Team,
-    TeamUser,
-};
+use db_models::{App, Domain, NewApp, NewDomain, Team, TeamUser};
 
-use crate::{
-    auth::AuthUser,
-    utils::slug::validate_slug,
-    DbConn,
-};
+use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
 
 #[get("/apps/<app_slug>")]
 pub async fn app(app_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<App>, Status> {

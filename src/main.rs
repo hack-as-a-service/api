@@ -13,10 +13,10 @@ use rocket::fs::NamedFile;
 use rocket_sync_db_pools::database;
 
 mod api;
+mod auth;
 mod schema;
 mod slack;
 mod utils;
-mod auth;
 
 #[database("db")]
 pub struct DbConn(PgConnection);

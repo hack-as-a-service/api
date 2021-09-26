@@ -8,20 +8,11 @@ use rocket::{
 
 use time::Duration;
 
-use db_models::{
-    NewTeam, Team,
-    TeamUser,
-    NewToken, Token,
-    NewUser, User,
-    WhitelistEntry,
-};
+use db_models::{NewTeam, NewToken, NewUser, Team, TeamUser, Token, User, WhitelistEntry};
 
 use crate::{
     slack::{exchange_code, user_info},
-    utils::{
-        slug::into_slug,
-        token::generate_token,
-    },
+    utils::{slug::into_slug, token::generate_token},
     DbConn,
 };
 

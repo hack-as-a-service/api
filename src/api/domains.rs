@@ -7,18 +7,9 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
-use db_models::{
-    App,
-    Domain, NewDomain,
-    Team,
-    TeamUser,
-};
+use db_models::{App, Domain, NewDomain, Team, TeamUser};
 
-use crate::{
-    auth::AuthUser,
-    utils::domain::validate_domain,
-    DbConn,
-};
+use crate::{auth::AuthUser, utils::domain::validate_domain, DbConn};
 
 #[post("/apps/<app_slug>/domains", data = "<domain>")]
 pub async fn create(

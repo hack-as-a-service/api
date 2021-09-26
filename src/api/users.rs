@@ -1,16 +1,9 @@
 use diesel::prelude::*;
 use rocket::{http::Status, serde::json::Json};
 
-use db_models::{
-    Team,
-    TeamUser,
-    User,
-};
+use db_models::{Team, TeamUser, User};
 
-use crate::{
-    auth::AuthUser,
-    DbConn,
-};
+use crate::{auth::AuthUser, DbConn};
 
 #[get("/users/me")]
 pub fn me(user: AuthUser) -> Json<User> {
