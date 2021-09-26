@@ -43,7 +43,7 @@ pub async fn create(
         let created_domain = diesel::insert_into(domains)
             .values(&NewDomain {
                 app_id: app.id,
-                verified: false,
+                verified: true,
                 ..domain.0
             })
             .get_result::<Domain>(c)
