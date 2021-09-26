@@ -17,7 +17,12 @@
     in {
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
-          fenixPkgs.stable.defaultToolchain
+          (fenixPkgs.stable.withComponents [
+            "cargo"
+            "rustc"
+            "rust-src"
+            "rustfmt"
+          ])
           fenixPkgs.rust-analyzer
           diesel-cli
         ];
