@@ -25,6 +25,7 @@
           ])
           fenixPkgs.rust-analyzer
           diesel-cli
+          cargo-edit
           libiconv
           (postgresql.override {
             systemd = false;
