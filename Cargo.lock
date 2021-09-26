@@ -466,9 +466,9 @@ dependencies = [
 name = "haas_api"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "diesel",
  "dotenv",
+ "haas_db_models",
  "hex",
  "lazy_static",
  "rand",
@@ -479,6 +479,15 @@ dependencies = [
  "serde",
  "serde_json",
  "time 0.2.27",
+]
+
+[[package]]
+name = "haas_db_models"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "serde",
 ]
 
 [[package]]
