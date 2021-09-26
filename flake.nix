@@ -25,6 +25,12 @@
           ])
           fenixPkgs.rust-analyzer
           diesel-cli
+          libiconv
+          (postgresql.override {
+            systemd = false;
+          })
+        ] ++ pkgs.lib.optional (lib.hasSuffix "darwin" system) [
+          pkgs.darwin.apple_sdk.frameworks.Security
         ];
       };
     });
