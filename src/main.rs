@@ -43,6 +43,7 @@ fn rocket() -> _ {
                 api::domains::create,
                 api::teams::apps,
                 api::teams::create,
+                api::teams::delete,
                 api::teams::team,
                 api::teams::update,
                 api::teams::users,

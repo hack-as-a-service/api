@@ -1,11 +1,11 @@
 use diesel::{
     prelude::*,
     result::{
-        DatabaseErrorKind::UniqueViolation,
+        DatabaseErrorKind::{ForeignKeyViolation, UniqueViolation},
         Error::{DatabaseError, NotFound},
     },
 };
-use rocket::{http::Status, serde::json::Json};
+use rocket::{http::Status, response::status::NoContent, serde::json::Json};
 
 use db_models::{App, NewTeam, Team, TeamUser, UpdatedTeam, User};
 
@@ -180,6 +180,40 @@ pub async fn update(
             })?;
 
         Ok(Json(new_team))
+    })
+    .await
+}
+
+#[delete("/teams/<team_slug>")]
+pub async fn delete(team_slug: String, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
+    conn.run(move |c| {
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::{id, slug, teams};
+
+        let (fetched_team, _) = teams
+            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
+            .inner_join(team_users)
+            .first::<(Team, TeamUser)>(c)
+            .map_err(|e| {
+                if e == NotFound {
+                    Status::NotFound
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        diesel::delete(teams.filter(id.eq(fetched_team.id)))
+            .execute(c)
+            .map_err(|e| {
+                println!("{:?}", e);
+                if let DatabaseError(ForeignKeyViolation, _) = e {
+                    Status::Conflict
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        Ok(NoContent)
     })
     .await
 }
