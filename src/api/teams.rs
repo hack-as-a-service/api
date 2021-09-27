@@ -7,7 +7,7 @@ use diesel::{
 };
 use rocket::{http::Status, serde::json::Json};
 
-use db_models::{App, NewTeam, Team, TeamUser, User};
+use db_models::{App, NewTeam, Team, TeamUser, UpdatedTeam, User};
 
 use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
 
@@ -141,6 +141,45 @@ pub async fn apps(
             .map_err(|_| Status::InternalServerError)?;
 
         Ok(Json(loaded_apps))
+    })
+    .await
+}
+
+#[patch("/teams/<team_slug>", data = "<team>")]
+pub async fn update(
+    team_slug: String,
+    user: AuthUser,
+    conn: DbConn,
+    team: Json<UpdatedTeam>,
+) -> Result<Json<Team>, Status> {
+    conn.run(move |c| {
+        use db_models::schema::team_users::dsl::{team_users, user_id};
+        use db_models::schema::teams::dsl::{id, slug, teams};
+
+        let (fetched_team, _) = teams
+            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
+            .inner_join(team_users)
+            .first::<(Team, TeamUser)>(c)
+            .map_err(|e| {
+                if e == NotFound {
+                    Status::NotFound
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        let new_team = diesel::update(teams.filter(id.eq(fetched_team.id)))
+            .set(&team.into_inner())
+            .get_result::<Team>(c)
+            .map_err(|e| {
+                if let DatabaseError(UniqueViolation, _) = e {
+                    Status::Conflict
+                } else {
+                    Status::InternalServerError
+                }
+            })?;
+
+        Ok(Json(new_team))
     })
     .await
 }

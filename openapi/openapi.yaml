@@ -89,6 +89,35 @@ paths:
           description: Unauthorized
         "409":
           description: Conflict
+    patch:
+      summary: Update a team
+      tags:
+        - Teams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Team"
+            example:
+              slug: hack-as-a-service
+              name: Hack as a Service
+              avatar: https://doggo.ninja/dzippy.png
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "500":
+          description: Internal server error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Team not found
+        "409":
+          description: Conflict
   /teams/{slug}:
     get:
       summary: Fetch a team

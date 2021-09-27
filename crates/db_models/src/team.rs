@@ -22,3 +22,11 @@ pub struct NewTeam {
     pub personal: bool,
     pub slug: String,
 }
+
+#[derive(Debug, AsChangeset, Deserialize)]
+#[table_name = "teams"]
+pub struct UpdatedTeam {
+    pub name: Option<String>,
+    pub slug: Option<String>,
+    pub avatar: Option<String>,
+}

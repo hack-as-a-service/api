@@ -44,6 +44,7 @@ fn rocket() -> _ {
                 api::teams::apps,
                 api::teams::create,
                 api::teams::team,
+                api::teams::update,
                 api::teams::users,
                 api::users::me,
                 api::users::teams
