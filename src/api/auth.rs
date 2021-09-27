@@ -62,25 +62,25 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
         .await
         .map_err(|_| Status::InternalServerError)?;
 
-    let whitelisted = if env::var("HAAS_PRODUCTION").is_err() {
-        true
-    } else {
-        let info = info.clone();
+    // let whitelisted = if env::var("HAAS_PRODUCTION").is_err() {
+    //     true
+    // } else {
+    //     let info = info.clone();
 
-        conn.run(|c| {
-            use crate::schema::whitelist::dsl::*;
+    //     conn.run(|c| {
+    //         use crate::schema::whitelist::dsl::*;
 
-            whitelist
-                .find(info.user_id)
-                .first::<WhitelistEntry>(c)
-                .is_ok()
-        })
-        .await
-    };
+    //         whitelist
+    //             .find(info.user_id)
+    //             .first::<WhitelistEntry>(c)
+    //             .is_ok()
+    //     })
+    //     .await
+    // };
 
-    if !whitelisted {
-        return Err(Status::Forbidden);
-    }
+    // if !whitelisted {
+    //     return Err(Status::Forbidden);
+    // }
 
     let token = conn
         .run(|c| -> Result<Token, ()> {
