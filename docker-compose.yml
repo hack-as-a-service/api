@@ -11,7 +11,7 @@ services:
       ROCKET_DATABASES: '{db = {url = "postgres://postgres:postgres@db:5432/postgres"}}'
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     ports:
-      - 3000:3000
+      - 5000:5000
   db:
     image: postgres:alpine
     environment:

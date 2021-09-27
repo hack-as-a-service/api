@@ -60,7 +60,7 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 
     echo -e "\nSwitching reverse proxy over to new deployment..."
     # Update Caddy config
-    curl -fs -X PATCH -H "Content-Type: application/json" -d "{\"@id\": \"haas_upstream\", \"dial\": \"\$HAAS_API_NEXT_IP:3000\"}" http://localhost:2019/id/haas_upstream
+    curl -fs -X PATCH -H "Content-Type: application/json" -d "{\"@id\": \"haas_upstream\", \"dial\": \"\$HAAS_API_NEXT_IP:5000\"}" http://localhost:2019/id/haas_upstream
 
     echo -e "\nRenaming containers..."
     docker rename haas_api haas_api_prev || true

@@ -1,6 +1,6 @@
 [default]
 address = "0.0.0.0"
-port = 3000
+port = 5000
 
 [global.databases]
 db = {url = "postgres://postgres:postgres@localhost:5432/postgres"}
