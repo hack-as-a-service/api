@@ -1,4 +1,5 @@
 use diesel::{
+    dsl::not,
     prelude::*,
     result::{
         DatabaseErrorKind::{ForeignKeyViolation, UniqueViolation},
@@ -154,10 +155,14 @@ pub async fn update(
 ) -> Result<Json<Team>, Status> {
     conn.run(move |c| {
         use db_models::schema::team_users::dsl::{team_users, user_id};
-        use db_models::schema::teams::dsl::{id, slug, teams};
+        use db_models::schema::teams::dsl::{id, personal, slug, teams};
 
         let (fetched_team, _) = teams
-            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
+            .filter(
+                slug.eq(&team_slug)
+                    .and(not(personal))
+                    .and(user_id.eq(user.id)),
+            )
             .inner_join(team_users)
             .first::<(Team, TeamUser)>(c)
             .map_err(|e| {
@@ -188,10 +193,14 @@ pub async fn update(
 pub async fn delete(team_slug: String, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
     conn.run(move |c| {
         use db_models::schema::team_users::dsl::{team_users, user_id};
-        use db_models::schema::teams::dsl::{id, slug, teams};
+        use db_models::schema::teams::dsl::{id, personal, slug, teams};
 
         let (fetched_team, _) = teams
-            .filter(slug.eq(&team_slug).and(user_id.eq(user.id)))
+            .filter(
+                slug.eq(&team_slug)
+                    .and(not(personal))
+                    .and(user_id.eq(user.id)),
+            )
             .inner_join(team_users)
             .first::<(Team, TeamUser)>(c)
             .map_err(|e| {
