@@ -79,7 +79,7 @@ pub async fn login(conn: DbConn, cookies: &CookieJar<'_>) -> Result<Redirect, St
             .http_only(true)
             .max_age(Duration::seconds(2592000))
             .same_site(SameSite::None)
-            .secure(true)
+            .secure(false)
             .finish(),
     );
 
