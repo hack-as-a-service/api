@@ -78,7 +78,7 @@ pub async fn login(conn: DbConn, cookies: &CookieJar<'_>) -> Result<Redirect, St
         Cookie::build("haas_token", token.token)
             .http_only(true)
             .max_age(Duration::seconds(2592000))
-            .same_site(SameSite::None)
+            .same_site(SameSite::Strict)
             .secure(false)
             .finish(),
     );

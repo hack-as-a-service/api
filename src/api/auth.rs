@@ -141,7 +141,7 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
         Cookie::build("haas_token", token.token.clone())
             .http_only(true)
             .max_age(Duration::seconds(2592000))
-            .same_site(SameSite::None)
+            .same_site(SameSite::Strict)
             .secure(true)
             .finish(),
     );
