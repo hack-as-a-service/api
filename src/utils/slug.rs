@@ -22,7 +22,7 @@ pub fn into_slug(text: &str, randomize: bool) -> String {
     if randomize {
         let mut rng = thread_rng();
 
-        format!("{}-{:4}", slug, rng.gen_range(0..10000))
+        format!("{}-{:04}", slug, rng.gen_range(0..10000))
     } else {
         slug
     }
