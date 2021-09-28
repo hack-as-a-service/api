@@ -40,6 +40,7 @@ fn rocket() -> _ {
                 api::apps::app,
                 api::apps::create,
                 api::apps::domains,
+                api::dev::login,
                 api::domains::create,
                 api::teams::apps,
                 api::teams::create,
