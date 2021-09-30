@@ -112,6 +112,10 @@ impl Provisioner {
         Ok(self.docker.build_image(bollard::image::BuildImageOptions {
             // FIXME: set limits
             t: format!("haas-apps/{}", image_id),
+            // Deletes intermediate containers created when building,
+            // which is what we want
+            rm: true,
+            forcerm: true,
             ..Default::default()
         }, None, Some(body)))
         //while let Some(s) = stream.try_next().await? {
