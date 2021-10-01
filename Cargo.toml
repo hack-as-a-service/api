@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-diesel = {version = "1.4.7", features = ["postgres", "chrono"]}
+diesel = {version = "1.4.8", features = ["postgres", "chrono"]}
 dotenv = "0.15.0"
 hex = "0.4.3"
 lazy_static = "1.4.0"

@@ -7,6 +7,6 @@ edition = "2018"
 
 [dependencies]
 chrono = {version = "0.4.19", features = ["serde"]}
-diesel = {version = "1.4.7", features = ["chrono"]}
+diesel = {version = "1.4.8", features = ["chrono"]}
 
 serde = {version = "1.0", features = ["derive"]}
