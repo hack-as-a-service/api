@@ -1,11 +1,14 @@
 use std::env;
 
+use base64::{decode, encode};
 use diesel::prelude::*;
+use form_urlencoded::Serializer;
 use rocket::{
     http::{Cookie, CookieJar, SameSite, Status},
     response::Redirect,
 };
 
+use serde::{Deserialize, Serialize};
 use time::Duration;
 
 use db_models::{NewTeam, NewToken, NewUser, Team, TeamUser, Token, User};
@@ -16,15 +19,47 @@ use crate::{
     DbConn,
 };
 
-#[get("/login")]
-pub async fn login() -> Result<Redirect, Status> {
+#[derive(Serialize, Deserialize, Debug, Default)]
+struct SlackOAuthState {
+    #[serde(rename(serialize = "r", deserialize = "r"))]
+    return_to: Option<String>,
+}
+
+impl SlackOAuthState {
+    fn to_state(&self) -> String {
+        // .unwrap is safe here because we know SlackOAuthState is fully serializable
+        let json = serde_json::to_string(self).unwrap();
+
+        encode(json)
+    }
+
+    fn from_state(state: &str) -> Self {
+        match decode(state) {
+            Ok(x) => match serde_json::from_slice::<SlackOAuthState>(&x) {
+                Ok(y) => y,
+                Err(_) => Self::default(),
+            },
+            Err(_) => Self::default(),
+        }
+    }
+}
+
+#[get("/login?<return_to>")]
+pub async fn login(return_to: Option<String>) -> Result<Redirect, Status> {
     let client_id = env::var("SLACK_CLIENT_ID").map_err(|_| Status::InternalServerError)?;
     let redirect_uri = env::var("SLACK_REDIRECT_URI").map_err(|_| Status::InternalServerError)?;
 
+    let mut serializer = Serializer::new(String::from(""));
+
+    serializer.append_pair("response_type", "code");
+    serializer.append_pair("scope", "openid profile email");
+    serializer.append_pair("client_id", &client_id);
+    serializer.append_pair("redirect_uri", &redirect_uri);
+    serializer.append_pair("state", &SlackOAuthState { return_to }.to_state());
+
     Ok(Redirect::temporary(format!(
-        "https://slack.com/openid/connect/authorize?response_type=code&scope=openid%20profile%20email&client_id={}&redirect_uri={}",
-        client_id,
-        redirect_uri,
+        "https://slack.com/openid/connect/authorize?{}",
+        serializer.finish()
     )))
 }
 
@@ -49,11 +84,18 @@ pub async fn logout(conn: DbConn, cookies: &CookieJar<'_>) -> Redirect {
     Redirect::temporary("/")
 }
 
-#[get("/oauth/code?<code>")]
-pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<Redirect, Status> {
+#[get("/oauth/code?<code>&<state>")]
+pub async fn code(
+    conn: DbConn,
+    code: &str,
+    state: Option<&str>,
+    cookies: &CookieJar<'_>,
+) -> Result<Redirect, Status> {
     let client_id = env::var("SLACK_CLIENT_ID").map_err(|_| Status::InternalServerError)?;
     let client_secret = env::var("SLACK_CLIENT_SECRET").map_err(|_| Status::InternalServerError)?;
     let redirect_uri = env::var("SLACK_REDIRECT_URI").map_err(|_| Status::InternalServerError)?;
+
+    let state = state.map_or(SlackOAuthState::default(), SlackOAuthState::from_state);
 
     let access_token = exchange_code(code, &client_id, &client_secret, &redirect_uri)
         .await
@@ -146,5 +188,7 @@ pub async fn code(conn: DbConn, code: &str, cookies: &CookieJar<'_>) -> Result<R
             .finish(),
     );
 
-    Ok(Redirect::temporary("/"))
+    Ok(Redirect::temporary(
+        state.return_to.unwrap_or(String::from("/")),
+    ))
 }

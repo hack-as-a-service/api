@@ -569,8 +569,10 @@ dependencies = [
 name = "haas_api"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "diesel",
  "dotenv",
+ "form_urlencoded",
  "haas_db_models",
  "hex",
  "lazy_static",
