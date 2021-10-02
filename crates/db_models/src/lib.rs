@@ -5,6 +5,8 @@ mod app;
 pub use app::*;
 mod domain;
 pub use domain::*;
+mod oauth_app;
+pub use oauth_app::*;
 mod team;
 pub use team::*;
 mod team_user;
