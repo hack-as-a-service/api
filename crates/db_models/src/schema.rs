@@ -26,6 +26,18 @@ table! {
 }
 
 table! {
+    oauth_device_requests (id) {
+        id -> Int4,
+        created_at -> Timestamp,
+        expires_at -> Timestamp,
+        oauth_app_id -> Text,
+        token -> Nullable<Text>,
+        device_code -> Text,
+        user_code -> Text,
+    }
+}
+
+table! {
     team_users (team_id, user_id) {
         user_id -> Int4,
         team_id -> Int4,
@@ -70,10 +82,20 @@ table! {
 
 joinable!(apps -> teams (team_id));
 joinable!(domains -> apps (app_id));
+joinable!(oauth_device_requests -> oauth_apps (oauth_app_id));
+joinable!(oauth_device_requests -> tokens (token));
 joinable!(team_users -> teams (team_id));
 joinable!(team_users -> users (user_id));
 joinable!(tokens -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
-    apps, domains, oauth_apps, team_users, teams, tokens, users, whitelist,
+    apps,
+    domains,
+    oauth_apps,
+    oauth_device_requests,
+    team_users,
+    teams,
+    tokens,
+    users,
+    whitelist,
 );

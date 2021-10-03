@@ -7,6 +7,8 @@ mod domain;
 pub use domain::*;
 mod oauth_app;
 pub use oauth_app::*;
+mod oauth_device_request;
+pub use oauth_device_request::*;
 mod team;
 pub use team::*;
 mod team_user;
