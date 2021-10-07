@@ -34,6 +34,8 @@ table! {
         token -> Nullable<Text>,
         device_code -> Text,
         user_code -> Text,
+        token_retrieved -> Bool,
+        access_denied -> Bool,
     }
 }
 

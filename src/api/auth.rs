@@ -21,7 +21,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 struct SlackOAuthState {
-    #[serde(rename(serialize = "r", deserialize = "r"))]
+    #[serde(rename = "r")]
     return_to: Option<String>,
 }
 

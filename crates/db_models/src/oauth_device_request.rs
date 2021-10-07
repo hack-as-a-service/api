@@ -13,12 +13,14 @@ pub struct OauthDeviceRequest {
     pub token: Option<String>,
     pub device_code: String,
     pub user_code: String,
+    pub token_retrieved: bool,
+    pub access_denied: bool,
 }
 
 #[derive(Insertable, Debug)]
 #[table_name = "oauth_device_requests"]
-pub struct NewOauthDeviceRequest {
-    pub oauth_app_id: String,
-    pub device_code: String,
-    pub user_code: String,
+pub struct NewOauthDeviceRequest<'a> {
+    pub oauth_app_id: &'a str,
+    pub device_code: &'a str,
+    pub user_code: &'a str,
 }
