@@ -181,6 +181,7 @@ pub async fn code(
 
     cookies.add(
         Cookie::build("haas_token", token.token.clone())
+            .path("/")
             .http_only(true)
             .max_age(Duration::seconds(2592000))
             .same_site(SameSite::Strict)
