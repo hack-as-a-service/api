@@ -50,7 +50,14 @@ pub async fn device_authorization(
         };
 
         let (_, app) = oauth_device_requests
-            .filter(oauth_device_request::user_code.eq(&user_code))
+            .filter(
+                oauth_device_request::user_code.eq(&user_code).and(
+                    oauth_device_request::expires_at
+                        .gt(now)
+                        .and(not(oauth_device_request::access_denied))
+                        .and(oauth_device_request::token.is_null()),
+                ),
+            )
             .inner_join(oauth_apps)
             .first::<(OauthDeviceRequest, OauthApp)>(c)
             .map_err(|e| {
