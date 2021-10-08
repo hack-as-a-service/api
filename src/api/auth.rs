@@ -189,7 +189,7 @@ pub async fn code(
             .finish(),
     );
 
-    Ok(Redirect::temporary(
+    Ok(Redirect::found(
         state.return_to.unwrap_or(String::from("/")),
     ))
 }
