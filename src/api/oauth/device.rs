@@ -1,5 +1,5 @@
 use crate::{
-    api::oauth::DeviceAuthorizationResponse,
+    api::oauth::{OauthError, OauthErrorType},
     auth::AuthUser,
     utils::{
         oauth_device::{generate_device_code, generate_user_code},
@@ -22,8 +22,20 @@ use rocket::{
     response::status::NoContent,
     serde::json::Json,
 };
+use serde::Serialize;
 
-use crate::api::oauth::DeviceAuthorizationRequest;
+#[derive(FromForm)]
+pub struct DeviceAuthorizationRequest {
+    client_id: String,
+}
+
+#[derive(Serialize)]
+pub struct DeviceAuthorizationResponse {
+    device_code: String,
+    user_code: String,
+    verification_uri: String,
+    expires_in: Option<i32>,
+}
 
 #[get("/oauth/device_authorizations/<user_code>/app_name")]
 pub async fn device_authorization(
@@ -111,7 +123,7 @@ pub async fn device_approve(
 pub async fn create_device_authorization(
     request: Form<Strict<DeviceAuthorizationRequest>>,
     conn: DbConn,
-) -> Result<Json<DeviceAuthorizationResponse>, Status> {
+) -> Result<Json<DeviceAuthorizationResponse>, OauthError> {
     conn.run(move |c| {
         use db_models::schema::oauth_device_requests::dsl::oauth_device_requests;
 
@@ -127,9 +139,9 @@ pub async fn create_device_authorization(
             .execute(c)
             .map_err(|e| {
                 if let DatabaseError(ForeignKeyViolation, _) = e {
-                    Status::BadRequest
+                    OauthError::new(OauthErrorType::InvalidClient)
                 } else {
-                    Status::InternalServerError
+                    OauthError::new(OauthErrorType::ServerError)
                 }
             })?;
 

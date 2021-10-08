@@ -13,19 +13,6 @@ use serde::Serialize;
 use crate::DbConn;
 
 #[derive(FromForm)]
-pub struct DeviceAuthorizationRequest {
-    client_id: String,
-}
-
-#[derive(Serialize)]
-pub struct DeviceAuthorizationResponse {
-    device_code: String,
-    user_code: String,
-    verification_uri: String,
-    expires_in: Option<i32>,
-}
-
-#[derive(FromForm)]
 pub struct AccessTokenRequest {
     grant_type: String,
     device_code: String,
@@ -35,21 +22,23 @@ pub struct AccessTokenRequest {
 #[derive(Serialize)]
 #[serde(tag = "error")]
 #[serde(rename_all = "snake_case")]
-pub enum AccessTokenErrorResponseType {
+pub enum OauthErrorType {
     AuthorizationPending,
     ExpiredToken,
     AccessDenied,
     UnsupportedGrantType,
     InvalidRequest,
+    InvalidGrant,
     ServerError,
+    InvalidClient,
 }
 
 #[derive(Responder)]
 #[response(status = 400)]
-pub struct AccessTokenErrorResponse(Json<AccessTokenErrorResponseType>);
+pub struct OauthError(Json<OauthErrorType>);
 
-impl AccessTokenErrorResponse {
-    fn new(t: AccessTokenErrorResponseType) -> Self {
+impl OauthError {
+    fn new(t: OauthErrorType) -> Self {
         Self(Json(t))
     }
 }
@@ -63,7 +52,7 @@ pub struct AccessTokenResponse {
 pub async fn token(
     request: Form<Strict<AccessTokenRequest>>,
     conn: DbConn,
-) -> Result<Json<AccessTokenResponse>, AccessTokenErrorResponse> {
+) -> Result<Json<AccessTokenResponse>, OauthError> {
     if request.grant_type == "urn:ietf:params:oauth:grant-type:device_code" {
         conn.run(move |c| {
             use db_models::schema::oauth_device_requests::dsl::{
@@ -77,27 +66,18 @@ pub async fn token(
                         .and(oauth_app_id.eq(&request.client_id)),
                 )
                 .first::<OauthDeviceRequest>(c)
-                .map_err(|_| {
-                    // AccessTokenErrorResponse(Json(AccessTokenErrorResponseType::InvalidRequest))
-                    AccessTokenErrorResponse::new(AccessTokenErrorResponseType::InvalidRequest)
-                })?;
+                .map_err(|_| OauthError::new(OauthErrorType::InvalidRequest))?;
 
             if req.token_retrieved {
-                return Err(AccessTokenErrorResponse::new(
-                    AccessTokenErrorResponseType::InvalidRequest,
-                ));
+                return Err(OauthError::new(OauthErrorType::InvalidGrant));
             }
 
             if req.expires_at.lt(&Utc::now().naive_utc()) {
-                return Err(AccessTokenErrorResponse::new(
-                    AccessTokenErrorResponseType::ExpiredToken,
-                ));
+                return Err(OauthError::new(OauthErrorType::ExpiredToken));
             }
 
             if req.access_denied {
-                return Err(AccessTokenErrorResponse::new(
-                    AccessTokenErrorResponseType::AccessDenied,
-                ));
+                return Err(OauthError::new(OauthErrorType::AccessDenied));
             }
 
             match req.token {
@@ -105,21 +85,15 @@ pub async fn token(
                     diesel::update(oauth_device_requests.find(req.id))
                         .set(token_retrieved.eq(true))
                         .execute(c)
-                        .map_err(|_| {
-                            AccessTokenErrorResponse::new(AccessTokenErrorResponseType::ServerError)
-                        })?;
+                        .map_err(|_| OauthError::new(OauthErrorType::ServerError))?;
 
                     Ok(Json(AccessTokenResponse { access_token }))
                 }
-                None => Err(AccessTokenErrorResponse::new(
-                    AccessTokenErrorResponseType::AuthorizationPending,
-                )),
+                None => Err(OauthError::new(OauthErrorType::AuthorizationPending)),
             }
         })
         .await
     } else {
-        return Err(AccessTokenErrorResponse(Json(
-            AccessTokenErrorResponseType::UnsupportedGrantType,
-        )));
+        return Err(OauthError(Json(OauthErrorType::UnsupportedGrantType)));
     }
 }
