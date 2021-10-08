@@ -168,7 +168,7 @@ pub async fn code(
 
             let created_token = diesel::insert_into(tokens)
                 .values(&NewToken {
-                    token: generate_token(),
+                    token: &generate_token(),
                     user_id: user.id,
                 })
                 .get_result::<Token>(c)

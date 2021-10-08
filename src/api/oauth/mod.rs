@@ -102,8 +102,7 @@ pub async fn token(
 
             match req.token {
                 Some(access_token) => {
-                    println!("hi");
-                    diesel::update(oauth_device_requests)
+                    diesel::update(oauth_device_requests.find(req.id))
                         .set(token_retrieved.eq(true))
                         .execute(c)
                         .map_err(|_| {
