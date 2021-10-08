@@ -184,7 +184,7 @@ pub async fn code(
             .path("/")
             .http_only(true)
             .max_age(Duration::seconds(2592000))
-            .same_site(SameSite::Strict)
+            .same_site(SameSite::Lax)
             .secure(true)
             .finish(),
     );
