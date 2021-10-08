@@ -50,6 +50,12 @@ pub enum AccessTokenErrorResponseType {
 #[response(status = 400)]
 pub struct AccessTokenErrorResponse(Json<AccessTokenErrorResponseType>);
 
+impl AccessTokenErrorResponse {
+    fn new(t: AccessTokenErrorResponseType) -> Self {
+        Self(Json(t))
+    }
+}
+
 #[derive(Serialize)]
 pub struct AccessTokenResponse {
     access_token: String,
@@ -110,25 +116,26 @@ pub async fn token(
                 )
                 .first::<OauthDeviceRequest>(c)
                 .map_err(|_| {
-                    AccessTokenErrorResponse(Json(AccessTokenErrorResponseType::InvalidRequest))
+                    // AccessTokenErrorResponse(Json(AccessTokenErrorResponseType::InvalidRequest))
+                    AccessTokenErrorResponse::new(AccessTokenErrorResponseType::InvalidRequest)
                 })?;
 
             if req.token_retrieved {
-                return Err(AccessTokenErrorResponse(Json(
+                return Err(AccessTokenErrorResponse::new(
                     AccessTokenErrorResponseType::InvalidRequest,
-                )));
+                ));
             }
 
             if req.expires_at.lt(&Utc::now().naive_utc()) {
-                return Err(AccessTokenErrorResponse(Json(
+                return Err(AccessTokenErrorResponse::new(
                     AccessTokenErrorResponseType::ExpiredToken,
-                )));
+                ));
             }
 
             if req.access_denied {
-                return Err(AccessTokenErrorResponse(Json(
+                return Err(AccessTokenErrorResponse::new(
                     AccessTokenErrorResponseType::AccessDenied,
-                )));
+                ));
             }
 
             match req.token {
@@ -138,16 +145,14 @@ pub async fn token(
                         .set(token_retrieved.eq(true))
                         .execute(c)
                         .map_err(|_| {
-                            AccessTokenErrorResponse(Json(
-                                AccessTokenErrorResponseType::ServerError,
-                            ))
+                            AccessTokenErrorResponse::new(AccessTokenErrorResponseType::ServerError)
                         })?;
 
                     Ok(Json(AccessTokenResponse { access_token }))
                 }
-                None => Err(AccessTokenErrorResponse(Json(
+                None => Err(AccessTokenErrorResponse::new(
                     AccessTokenErrorResponseType::AuthorizationPending,
-                ))),
+                )),
             }
         })
         .await
