@@ -15,7 +15,7 @@ pub struct Token {
 
 #[derive(Debug, Insertable)]
 #[table_name = "tokens"]
-pub struct NewToken {
-    pub token: String,
+pub struct NewToken<'a> {
+    pub token: &'a str,
     pub user_id: i32,
 }

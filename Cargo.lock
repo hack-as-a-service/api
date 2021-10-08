@@ -570,6 +570,7 @@ name = "haas_api"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "chrono",
  "diesel",
  "dotenv",
  "form_urlencoded",

@@ -64,7 +64,7 @@ pub async fn login(conn: DbConn, cookies: &CookieJar<'_>) -> Result<Redirect, St
 
             let created_token = diesel::insert_into(tokens)
                 .values(&NewToken {
-                    token: generate_token(),
+                    token: &generate_token(),
                     user_id: user.id,
                 })
                 .get_result::<Token>(c)
