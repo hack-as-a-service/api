@@ -27,6 +27,7 @@
           diesel-cli
           cargo-edit
           libiconv
+          caddy
           (postgresql.override {
             systemd = false;
           })
