@@ -31,8 +31,8 @@
           (postgresql.override {
             systemd = false;
           })
-        ] ++ pkgs.lib.optional (lib.hasSuffix "darwin" system) [
-          pkgs.darwin.apple_sdk.frameworks.Security
+        ] ++ lib.optional (lib.hasSuffix "darwin" system) [
+          darwin.apple_sdk.frameworks.Security
         ];
       };
     });
