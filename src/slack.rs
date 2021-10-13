@@ -18,9 +18,9 @@ pub async fn exchange_code(
 		.post("https://slack.com/api/openid.connect.token")
 		.form(&[
 			("code", code),
-			("client_id", &client_id),
-			("client_secret", &client_secret),
-			("redirect_uri", &redirect_uri),
+			("client_id", client_id),
+			("client_secret", client_secret),
+			("redirect_uri", redirect_uri),
 		])
 		.send()
 		.await

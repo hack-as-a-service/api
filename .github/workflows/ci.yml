@@ -31,6 +31,20 @@ jobs:
           toolchain: stable
       - name: Build
         run: cargo build
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy
+      - name: Lint
+        run: cargo clippy -- -D warnings
   lint-docker:
     runs-on: ubuntu-latest
     container: hadolint/hadolint:latest-debian

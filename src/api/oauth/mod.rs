@@ -94,6 +94,6 @@ pub async fn token(
 		})
 		.await
 	} else {
-		return Err(OauthError(Json(OauthErrorType::UnsupportedGrantType)));
+		Err(OauthError(Json(OauthErrorType::UnsupportedGrantType)))
 	}
 }

@@ -180,7 +180,7 @@ pub async fn code(
 		.map_err(|_| Status::InternalServerError)?;
 
 	cookies.add(
-		Cookie::build("haas_token", token.token.clone())
+		Cookie::build("haas_token", token.token)
 			.path("/")
 			.http_only(true)
 			.max_age(Duration::seconds(2592000))
@@ -190,6 +190,6 @@ pub async fn code(
 	);
 
 	Ok(Redirect::found(
-		state.return_to.unwrap_or(String::from("/")),
+		state.return_to.unwrap_or_else(|| String::from("/")),
 	))
 }
