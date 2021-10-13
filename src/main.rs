@@ -22,39 +22,39 @@ pub struct DbConn(PgConnection);
 
 #[get("/openapi.yaml")]
 async fn openapi() -> &'static str {
-    include_str!("../openapi/openapi.yaml")
+	include_str!("../openapi/openapi.yaml")
 }
 
 #[launch]
 fn rocket() -> _ {
-    dotenv().ok();
+	dotenv().ok();
 
-    rocket::build()
-        .mount(
-            "/api",
-            routes![
-                openapi,
-                api::auth::login,
-                api::auth::logout,
-                api::auth::code,
-                api::apps::app,
-                api::apps::create,
-                api::apps::domains,
-                api::dev::login,
-                api::domains::create,
-                api::oauth::create_device_authorization,
-                api::oauth::device_authorization,
-                api::oauth::device_approve,
-                api::oauth::token,
-                api::teams::apps,
-                api::teams::create,
-                api::teams::delete,
-                api::teams::team,
-                api::teams::update,
-                api::teams::users,
-                api::users::me,
-                api::users::teams
-            ],
-        )
-        .attach(DbConn::fairing())
+	rocket::build()
+		.mount(
+			"/api",
+			routes![
+				openapi,
+				api::auth::login,
+				api::auth::logout,
+				api::auth::code,
+				api::apps::app,
+				api::apps::create,
+				api::apps::domains,
+				api::dev::login,
+				api::domains::create,
+				api::oauth::create_device_authorization,
+				api::oauth::device_authorization,
+				api::oauth::device_approve,
+				api::oauth::token,
+				api::teams::apps,
+				api::teams::create,
+				api::teams::delete,
+				api::teams::team,
+				api::teams::update,
+				api::teams::users,
+				api::users::me,
+				api::users::teams
+			],
+		)
+		.attach(DbConn::fairing())
 }

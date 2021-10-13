@@ -4,5 +4,5 @@ use crate::schema::whitelist;
 #[table_name = "whitelist"]
 #[primary_key("slack_user_id")]
 pub struct WhitelistEntry {
-    pub slack_user_id: String,
+	pub slack_user_id: String,
 }

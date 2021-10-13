@@ -7,15 +7,15 @@ use chrono::NaiveDateTime;
 #[table_name = "tokens"]
 #[belongs_to(User)]
 pub struct Token {
-    pub token: String,
-    pub created_at: NaiveDateTime,
-    pub expires_at: NaiveDateTime,
-    pub user_id: i32,
+	pub token: String,
+	pub created_at: NaiveDateTime,
+	pub expires_at: NaiveDateTime,
+	pub user_id: i32,
 }
 
 #[derive(Debug, Insertable)]
 #[table_name = "tokens"]
 pub struct NewToken<'a> {
-    pub token: &'a str,
-    pub user_id: i32,
+	pub token: &'a str,
+	pub user_id: i32,
 }

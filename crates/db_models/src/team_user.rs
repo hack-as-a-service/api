@@ -8,6 +8,6 @@ use crate::{team::Team, user::User};
 #[belongs_to(User)]
 #[primary_key(team_id, user_id)]
 pub struct TeamUser {
-    pub user_id: i32,
-    pub team_id: i32,
+	pub user_id: i32,
+	pub team_id: i32,
 }
