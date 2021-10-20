@@ -33,44 +33,6 @@ impl Provisioner {
 		})
 	}
 
-	// pub async fn tarball_body_for_github_url(uri: &Uri, rev: Option<&str>) -> Result<Body> {
-	//     if uri.authority().map(|x| x.host()) != Some("github.com") {
-	//         return Err(ProvisionerError::InvalidGitHubURI);
-	//     }
-	//     let (owner, repo) = {
-	//         let mut s = uri.path().split("/").skip(1);
-	//         let a = s.next().ok_or(ProvisionerError::InvalidGitHubURI)?;
-	//         let b = s.next().ok_or(ProvisionerError::InvalidGitHubURI)?;
-	//         (a, b)
-	//     };
-	//     let new_uri = Uri::builder()
-	//         .scheme("https")
-	//         .authority("api.github.com")
-	//         .path_and_query(format!("/repos/{}/{}/tarball/{}", owner, repo, rev.unwrap_or("")))
-	//         .build()?;
-	//     //let new_uri = format!("https://api.github.com/repos/{}/{}/tarball/{}", owner, repo, rev.unwrap_or("")).parse().unwrap();
-	//     println!("url is {}", new_uri);
-	//     let https = hyper_tls::HttpsConnector::new();
-	//     let client = hyper::Client::builder().build::<_, Body>(https);
-	//     let req = hyper::Request::get(&new_uri)
-	//         .header("Accept", "*/*")
-	//         .header("User-Agent", "curl 7")
-	//         .body(Body::empty())
-	//         .unwrap();
-	//     let response = client.request(req).await?;
-	//     if !response.status().is_redirection() {
-	//         println!("response is not redirect, got {}", response.status());
-	//         return Err(ProvisionerError::RequestFailed);
-	//     }
-	//     // Follow `Location` header again...
-	//     let response2 = client.get(response.headers().get(hyper::http::header::LOCATION).unwrap().to_str().unwrap().parse().unwrap()).await?;
-	//     if response2.status().is_success() {
-	//         Ok(response2.into_body())
-	//     } else {
-	//         Err(ProvisionerError::RequestFailed)
-	//     }
-	// }
-
 	pub async fn tarball_body_for_git_uri(uri: &Uri) -> Result<Body> {
 		use mktemp::Temp;
 		use tokio::{fs, process::Command};
