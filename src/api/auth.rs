@@ -22,6 +22,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Default)]
 struct SlackOAuthState {
 	#[serde(rename = "r")]
+	#[serde(skip_serializing_if = "Option::is_none")]
 	return_to: Option<String>,
 }
 
@@ -87,7 +88,7 @@ pub async fn logout(conn: DbConn, cookies: &CookieJar<'_>) -> Redirect {
 #[get("/oauth/code?<code>&<state>")]
 pub async fn code(
 	conn: DbConn,
-	code: &str,
+	code: Option<&str>,
 	state: Option<&str>,
 	cookies: &CookieJar<'_>,
 ) -> Result<Redirect, Status> {
@@ -96,6 +97,11 @@ pub async fn code(
 	let redirect_uri = env::var("SLACK_REDIRECT_URI").map_err(|_| Status::InternalServerError)?;
 
 	let state = state.map_or(SlackOAuthState::default(), SlackOAuthState::from_state);
+
+	let code = match code {
+		Some(c) => c,
+		None => return Ok(Redirect::found("/")),
+	};
 
 	let access_token = exchange_code(code, &client_id, &client_secret, &redirect_uri)
 		.await
