@@ -45,6 +45,7 @@ fn rocket() -> _ {
 				api::oauth::create_device_authorization,
 				api::oauth::device_authorization,
 				api::oauth::device_approve,
+				api::oauth::device_reject,
 				api::oauth::token,
 				api::teams::apps,
 				api::teams::create,

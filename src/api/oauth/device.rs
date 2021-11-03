@@ -126,6 +126,44 @@ pub async fn device_approve(
 	.await
 }
 
+#[post("/oauth/device_authorizations/<user_code>/reject")]
+pub async fn device_reject(
+	_user: AuthUser,
+	conn: DbConn,
+	user_code: String,
+) -> Result<NoContent, Status> {
+	conn.run(move |c| {
+		use db_models::schema::oauth_device_requests::dsl::{
+			self as oauth_device_request, oauth_device_requests,
+		};
+		let req = oauth_device_requests
+			.filter(
+				oauth_device_request::user_code.eq(&user_code).and(
+					oauth_device_request::expires_at
+						.gt(now)
+						.and(not(oauth_device_request::access_denied))
+						.and(oauth_device_request::token.is_null()),
+				),
+			)
+			.first::<OauthDeviceRequest>(c)
+			.map_err(|e| {
+				if e == NotFound {
+					Status::NotFound
+				} else {
+					Status::InternalServerError
+				}
+			})?;
+
+		diesel::update(oauth_device_requests.find(req.id))
+			.set(oauth_device_request::access_denied.eq(true))
+			.execute(c)
+			.map_err(|_| Status::InternalServerError)?;
+
+		Ok(NoContent)
+	})
+	.await
+}
+
 #[post("/oauth/device_authorization", data = "<request>")]
 pub async fn create_device_authorization(
 	request: Form<Strict<DeviceAuthorizationRequest>>,
