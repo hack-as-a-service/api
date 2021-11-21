@@ -11,9 +11,9 @@ FROM debian:buster AS runner
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    libssl1.1=1.1.1d-0+deb10u7 \
-    libpq5=11.12-0+deb10u1 \
-    ca-certificates=20200601~deb10u2 \
+    libssl1.1 \
+    libpq5 \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
