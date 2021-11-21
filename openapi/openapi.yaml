@@ -379,6 +379,33 @@ paths:
           description: App not found
         "401":
           description: Unauthorized
+  /domains/{id}/verify:
+    post:
+      summary: Attempt to verify a domain
+      tags:
+        - Domains
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          example: 7
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Domain"
+        "500":
+          description: Internal server error
+        "409":
+          description: Conflict (domain already verified on another app)
+        "404":
+          description: Domain not found
+        "401":
+          description: Unauthorized
 
 components:
   securitySchemes:

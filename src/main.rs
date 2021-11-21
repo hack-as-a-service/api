@@ -9,7 +9,9 @@ extern crate lazy_static;
 
 use diesel::prelude::*;
 use dotenv::dotenv;
+use rocket::tokio::{net::UdpSocket, sync::RwLock};
 use rocket_sync_db_pools::database;
+use trust_dns_client::{client::AsyncClient, udp::UdpClientStream};
 
 mod api;
 mod auth;
@@ -26,8 +28,16 @@ async fn openapi() -> &'static str {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
 	dotenv().ok();
+
+	// Instantiate a DNS client for domain verification
+	let stream = UdpClientStream::<UdpSocket>::new(([1, 1, 1, 1], 53).into());
+	let (dns_client, bg) = AsyncClient::connect(stream)
+		.await
+		.expect("Error instantiating DNS client");
+
+	rocket::tokio::spawn(bg);
 
 	rocket::build()
 		.mount(
@@ -42,6 +52,7 @@ fn rocket() -> _ {
 				api::apps::domains,
 				api::dev::login,
 				api::domains::create,
+				api::domains::verify,
 				api::oauth::create_device_authorization,
 				api::oauth::device_authorization,
 				api::oauth::device_approve,
@@ -58,4 +69,5 @@ fn rocket() -> _ {
 			],
 		)
 		.attach(DbConn::fairing())
+		.manage(RwLock::new(dns_client))
 }
