@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 bollard = "0.11.0"
-hyper = { version = "0.14.13", features = ["stream"] }
+hyper = { version = "0.14.15", features = ["stream"] }
 mktemp = "0.4.1"
 thiserror = "1.0.30"
 tokio = { version = "1", features = ["fs", "process"] }
