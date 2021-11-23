@@ -7,6 +7,6 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.48"
-futures-util = "0.3.17"
+futures-util = "0.3.18"
 provisioner = {package = "haas_provisioner", path = "../provisioner"}
 tokio = { version = "1.14.0", features = ["full"] }
