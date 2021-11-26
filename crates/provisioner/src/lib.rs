@@ -37,7 +37,6 @@ impl Provisioner {
 		use mktemp::Temp;
 		use tokio::{fs, process::Command};
 		use tokio_stream::StreamExt;
-		use tokio_util::codec::Decoder;
 		let clone_dir = Temp::new_path();
 		let status = Command::new("git")
 			.args(&["clone", "--depth=1", &uri.to_string()])
@@ -58,13 +57,11 @@ impl Provisioner {
 		if !status.success() {
 			return Err(ProvisionerError::GitCloneFailed);
 		}
-		//fs::remove_dir_all(&clone_dir).await?;
 		let f = fs::File::open(archive_path).await?;
-		let codec = tokio_util::codec::BytesCodec::new();
-		let mapped_stream = codec.framed(f).map(|i| {
-			i.map(|b| b.freeze())
-				// Has to be coerced for Into<Body>
-				.map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync + 'static>)
+		let stream = tokio_util::io::ReaderStream::new(f);
+		let mapped_stream = stream.map(|i| {
+			// Has to be coerced for Into<Body>
+			i.map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync + 'static>)
 		});
 		// Type that Into<Body> expects
 		let s2: Box<
@@ -100,9 +97,5 @@ impl Provisioner {
 			None,
 			Some(body),
 		))
-		//while let Some(s) = stream.try_next().await? {
-		//    // empty
-		//}
-		//Ok(())
 	}
 }

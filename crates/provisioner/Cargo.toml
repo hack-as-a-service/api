@@ -12,4 +12,4 @@ mktemp = "0.4.1"
 thiserror = "1.0.30"
 tokio = { version = "1", features = ["fs", "process"] }
 tokio-stream = "0.1.8"
-tokio-util = { version = "0.6.9", features = ["codec"] }
+tokio-util = { version = "0.6.9", features = ["io"] }
