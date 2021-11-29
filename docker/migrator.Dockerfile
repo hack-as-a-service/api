@@ -1,6 +1,6 @@
 # This Docker image performs migrations on the database
 
-FROM rust:1.54
+FROM rust:1.56
 
 WORKDIR /usr/src/app
 
