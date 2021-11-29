@@ -6,7 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     fenix = {
       url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      #inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -17,7 +17,7 @@
     in {
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
-          (fenixPkgs.stable.withComponents [
+          (fenixPkgs.latest.withComponents [
             "cargo"
             "rustc"
             "rust-src"
