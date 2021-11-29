@@ -168,6 +168,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
+name = "caddy"
+version = "0.1.0"
+source = "git+https://github.com/hack-as-a-service/caddy-rs?rev=2cc141255f4883197938e482a14923b5fda07e17#2cc141255f4883197938e482a14923b5fda07e17"
+dependencies = [
+ "caddy_types",
+ "reqwest",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "caddy_types"
+version = "0.1.0"
+source = "git+https://github.com/hack-as-a-service/caddy-rs?rev=2cc141255f4883197938e482a14923b5fda07e17#2cc141255f4883197938e482a14923b5fda07e17"
+dependencies = [
+ "caddy_types_codegen",
+ "serde",
+]
+
+[[package]]
+name = "caddy_types_codegen"
+version = "0.1.0"
+source = "git+https://github.com/hack-as-a-service/caddy-rs?rev=2cc141255f4883197938e482a14923b5fda07e17#2cc141255f4883197938e482a14923b5fda07e17"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -611,7 +644,11 @@ name = "haas_provisioner"
 version = "0.1.0"
 dependencies = [
  "bollard",
+ "caddy",
+ "diesel",
+ "haas_db_models",
  "hyper",
+ "log",
  "mktemp",
  "thiserror",
  "tokio",
