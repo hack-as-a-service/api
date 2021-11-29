@@ -22,6 +22,10 @@ pub use hyper;
 
 type Result<T> = std::result::Result<T, ProvisionerError>;
 
+fn image_id_from_slug(slug: &str) -> String {
+	format!("haas-apps/{}", slug)
+}
+
 pub struct Provisioner {
 	docker: Docker,
 }
@@ -77,8 +81,8 @@ impl Provisioner {
 	}
 
 	pub async fn build_image_from_github(
-		&mut self,
-		image_id: &str,
+		&self,
+		app_slug: &str,
 		uri: &Uri,
 	) -> Result<
 		impl Stream<Item = std::result::Result<bollard::models::BuildInfo, bollard::errors::Error>>,
@@ -87,7 +91,7 @@ impl Provisioner {
 		Ok(self.docker.build_image(
 			bollard::image::BuildImageOptions {
 				// FIXME: set limits
-				t: format!("haas-apps/{}", image_id),
+				t: image_id_from_slug(app_slug),
 				// Deletes intermediate containers created when building,
 				// which is what we want
 				rm: true,
