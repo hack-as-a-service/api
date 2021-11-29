@@ -13,6 +13,8 @@ pub struct App {
 	pub enabled: bool,
 	#[serde(skip_serializing)]
 	pub container_id: Option<String>,
+	#[serde(skip_serializing)]
+	pub network_id: Option<String>,
 }
 
 #[derive(Insertable, Deserialize, Debug)]

@@ -6,6 +6,7 @@ table! {
 		team_id -> Int4,
 		enabled -> Bool,
 		container_id -> Nullable<Text>,
+		network_id -> Nullable<Text>,
 	}
 }
 
