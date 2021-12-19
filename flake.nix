@@ -14,7 +14,7 @@
     let
       pkgs = nixpkgs.legacyPackages.${system};
       fenixPkgs = fenix.packages.${system};
-    in {
+    in rec {
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
           (fenixPkgs.latest.withComponents [
@@ -35,5 +35,15 @@
           darwin.apple_sdk.frameworks.Security
         ];
       };
+
+      packages.haas-api = pkgs.rustPlatform.buildRustPackage rec {
+        pname = "haas-api";
+        version = "0.0.0";
+        src = ./.;
+        cargoLock.lockFile = ./Cargo.lock;
+        doCheck = false; # FIXME
+      };
+
+      defaultPackage = packages.haas-api;
     });
 }
