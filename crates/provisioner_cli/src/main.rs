@@ -1,15 +1,52 @@
+use clap::Parser;
+use diesel::prelude::*;
 use futures_util::TryStreamExt;
+
+#[derive(Parser)]
+#[clap(version = "0.1")]
+struct Opts {
+	#[clap(long)]
+	slug: String,
+	#[clap(subcommand)]
+	subcmd: Subcommand,
+}
+
+#[derive(Parser)]
+enum Subcommand {
+	Build {
+		#[clap(long)]
+		github_uri: String,
+	},
+	Deploy {
+		#[clap(long)]
+		database_url: String,
+	},
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let mut args = std::env::args().skip(1);
-	let image_id = args.next().expect("first arg is image id");
-	let url = args.next().expect("second arg is github uri");
-	let mut p = provisioner::Provisioner::connect_with_local_defaults()?;
-	let mut s = p.build_image_from_github(&image_id, &url.parse()?).await?;
-	while let Some(s2) = s.try_next().await? {
-		println!("{:?}", s2);
+	pretty_env_logger::init();
+	let opts = Opts::parse();
+	let caddy_url = provisioner::caddy::Url::parse("http://localhost:2019/")?;
+	let mut provisioner = provisioner::Provisioner::connecting_with_local_defaults(
+		caddy_url,
+		"caddy-server".to_owned(),
+	)?;
+	match &opts.subcmd {
+		Subcommand::Build { github_uri, .. } => {
+			let mut s = provisioner
+				.build_image_from_github(&opts.slug, &github_uri.parse()?)
+				.await?;
+			while let Some(s2) = s.try_next().await? {
+				log::info!("{:?}", s2);
+			}
+			log::info!("Build done!");
+		}
+		Subcommand::Deploy { database_url, .. } => {
+			let conn = diesel::PgConnection::establish(database_url)?;
+			provisioner.deploy_app(&opts.slug, &conn).await?;
+			log::info!("Deploy done!");
+		}
 	}
-	println!("Build done!");
 	Ok(())
 }

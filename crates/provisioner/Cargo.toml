@@ -21,4 +21,4 @@ log = "0.4.14"
 [dependencies.caddy]
 #path = "../../../caddy-rs"
 git = "https://github.com/hack-as-a-service/caddy-rs"
-rev = "2cc141255f4883197938e482a14923b5fda07e17"
+rev = "0bf50a846bd19ab76f4496a64b85840bae0417b4"
