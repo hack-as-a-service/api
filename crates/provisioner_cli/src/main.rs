@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
 	pretty_env_logger::init();
 	let opts = Opts::parse();
 	let caddy_url = provisioner::caddy::Url::parse("http://localhost:2019/")?;
-	let mut provisioner = provisioner::Provisioner::connecting_with_local_defaults(
+	let provisioner = provisioner::Provisioner::connecting_with_local_defaults(
 		caddy_url,
 		"caddy-server".to_owned(),
 	)?;

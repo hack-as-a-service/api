@@ -209,7 +209,7 @@ impl Provisioner {
 			let ip = network.ip_address.as_ref().ok_or_else(|| {
 				ProvisionerError::DeployError("Failed to get IP address".to_owned())
 			})?;
-			Ok::<_, ProvisionerError>(ip.split("/").nth(0).unwrap().to_string())
+			Ok::<_, ProvisionerError>(ip.split('/').next().unwrap().to_string())
 		}?;
 		//new_container_info
 		//	.network_settings
@@ -233,7 +233,7 @@ impl Provisioner {
 			]);
 			handle
 				.put(&caddy::types::Upstream {
-					dial: Some(upstream.clone().into()),
+					dial: Some(upstream.clone()),
 					..Default::default()
 				})
 				.await
@@ -254,35 +254,24 @@ impl Provisioner {
 				let route = Identified {
 					id: Some(route_id.clone()),
 					value: Route {
-						r#match: Some(
-							vec![HttpMatchersMap {
-								// FIXME: domains support
-								host: Some(
-									vec![format!("{}.hackclub.app", app_slug).into()].into(),
-								),
-								..Default::default()
-							}
-							.into()]
-							.into(),
-						),
-						handle: Some(
-							vec![HttpHandlers::ReverseProxy(
-								reverseproxyHandler {
-									upstreams: Some(
-										vec![Upstream {
-											dial: Some(upstream.clone().into()),
-											..Default::default()
-										}
-										.into()]
-										.into(),
-									),
+						r#match: Some(vec![HttpMatchersMap {
+							// FIXME: domains support
+							host: Some(vec![format!("{}.hackclub.app", app_slug)]),
+							..Default::default()
+						}
+						.into()]),
+						handle: Some(vec![HttpHandlers::ReverseProxy(
+							reverseproxyHandler {
+								upstreams: Some(vec![Upstream {
+									dial: Some(upstream.clone()),
 									..Default::default()
 								}
-								.into(),
-							)
-							.into()]
+								.into()]),
+								..Default::default()
+							}
 							.into(),
-						),
+						)
+						.into()]),
 						..Default::default()
 					},
 				};
@@ -303,7 +292,7 @@ impl Provisioner {
 				.appending_path(&["handle", "0", "upstreams"]);
 		handle
 			.patch(&vec![caddy::types::Upstream {
-				dial: Some(upstream.into()),
+				dial: Some(upstream),
 				..Default::default()
 			}])
 			.await?;
