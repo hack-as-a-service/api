@@ -35,7 +35,9 @@ async fn main() -> anyhow::Result<()> {
 		"caddy-server".to_owned(),
 	)?;
 	match &opts.subcmd {
-		Subcommand::Build { github_uri, slug, .. } => {
+		Subcommand::Build {
+			github_uri, slug, ..
+		} => {
 			let mut s = provisioner
 				.build_image_from_github(opts.id, &slug, &github_uri.parse()?)
 				.await?;

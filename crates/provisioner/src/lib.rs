@@ -114,9 +114,7 @@ impl Provisioner {
 				// which is what we want
 				rm: true,
 				forcerm: true,
-				labels: [
-					("app.hackclub.app_slug".to_owned(), app_slug.to_owned()),
-				].into(),
+				labels: [("app.hackclub.app_slug".to_owned(), app_slug.to_owned())].into(),
 				..Default::default()
 			},
 			None,
@@ -140,9 +138,7 @@ impl Provisioner {
 				self.docker
 					.create_network(bollard::network::CreateNetworkOptions {
 						name: network_name.clone(),
-						labels: [
-							("app.hackclub.app_slug".to_owned(), app.slug.to_owned()),
-						].into(),
+						labels: [("app.hackclub.app_slug".to_owned(), app.slug.to_owned())].into(),
 						..Default::default()
 					})
 					.await?
@@ -185,9 +181,7 @@ impl Provisioner {
 						network_mode: Some(network_id.to_owned()),
 						..Default::default()
 					}),
-					labels: Some([
-						("app.hackclub.app_slug", app.slug.as_str()),
-					].into()),
+					labels: Some([("app.hackclub.app_slug", app.slug.as_str())].into()),
 					..Default::default()
 				},
 			)
