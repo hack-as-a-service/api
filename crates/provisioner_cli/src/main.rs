@@ -16,6 +16,8 @@ enum Subcommand {
 	Build {
 		#[clap(long)]
 		github_uri: String,
+		#[clap(long)]
+		slug: String,
 	},
 	Deploy {
 		#[clap(long)]
@@ -33,9 +35,9 @@ async fn main() -> anyhow::Result<()> {
 		"caddy-server".to_owned(),
 	)?;
 	match &opts.subcmd {
-		Subcommand::Build { github_uri, .. } => {
+		Subcommand::Build { github_uri, slug, .. } => {
 			let mut s = provisioner
-				.build_image_from_github(opts.id, &github_uri.parse()?)
+				.build_image_from_github(opts.id, &slug, &github_uri.parse()?)
 				.await?;
 			while let Some(s2) = s.try_next().await? {
 				log::info!("{:?}", s2);

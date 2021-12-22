@@ -100,6 +100,7 @@ impl Provisioner {
 	pub async fn build_image_from_github(
 		&self,
 		app_id: i32,
+		app_slug: &str,
 		uri: &Uri,
 	) -> Result<
 		impl Stream<Item = std::result::Result<bollard::models::BuildInfo, bollard::errors::Error>>,
@@ -113,6 +114,9 @@ impl Provisioner {
 				// which is what we want
 				rm: true,
 				forcerm: true,
+				labels: [
+					("app.hackclub.app_slug".to_owned(), app_slug.to_owned()),
+				].into(),
 				..Default::default()
 			},
 			None,
@@ -136,6 +140,9 @@ impl Provisioner {
 				self.docker
 					.create_network(bollard::network::CreateNetworkOptions {
 						name: network_name.clone(),
+						labels: [
+							("app.hackclub.app_slug".to_owned(), app.slug.to_owned()),
+						].into(),
 						..Default::default()
 					})
 					.await?
@@ -178,6 +185,9 @@ impl Provisioner {
 						network_mode: Some(network_id.to_owned()),
 						..Default::default()
 					}),
+					labels: Some([
+						("app.hackclub.app_slug", app.slug.as_str()),
+					].into()),
 					..Default::default()
 				},
 			)
