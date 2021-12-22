@@ -32,8 +32,8 @@ pub use hyper;
 
 type Result<T> = std::result::Result<T, ProvisionerError>;
 
-fn image_id_from_slug(slug: &str) -> String {
-	format!("haas-apps/{}", slug)
+fn image_id_from_app_id(app_id: i32) -> String {
+	format!("haas-apps-{}", app_id)
 }
 
 pub struct Provisioner {
@@ -99,7 +99,7 @@ impl Provisioner {
 
 	pub async fn build_image_from_github(
 		&self,
-		app_slug: &str,
+		app_id: i32,
 		uri: &Uri,
 	) -> Result<
 		impl Stream<Item = std::result::Result<bollard::models::BuildInfo, bollard::errors::Error>>,
@@ -108,7 +108,7 @@ impl Provisioner {
 		Ok(self.docker.build_image(
 			bollard::image::BuildImageOptions {
 				// FIXME: set limits
-				t: image_id_from_slug(app_slug),
+				t: image_id_from_app_id(app_id),
 				// Deletes intermediate containers created when building,
 				// which is what we want
 				rm: true,
@@ -122,14 +122,14 @@ impl Provisioner {
 
 	/// NB: requires that the app's image has been built using [Self#build_image_from_github].
 	/// !!! This does not do any privilege checks
-	pub async fn deploy_app(&self, app_slug: &str, c: &PgConn) -> Result<()> {
-		use db_models::schema::apps::dsl::{self as apps_dsl, apps, slug};
+	pub async fn deploy_app(&self, app_id: i32, c: &PgConn) -> Result<()> {
+		use db_models::schema::apps::dsl::{self as apps_dsl, apps, id};
 		use db_models::App;
-		let image_id = image_id_from_slug(app_slug);
-		info!("Deploying app by slug {} (image {})", app_slug, image_id);
-		let mut app = apps.filter(slug.eq(app_slug)).first::<App>(c)?;
+		let image_id = image_id_from_app_id(app_id);
+		info!("Deploying app by ID {} (image {})", app_id, image_id);
+		let mut app = apps.filter(id.eq(app_id)).first::<App>(c)?;
 		// 1. Get or create the app network
-		let network_name = format!("haas_apps_{}", app_slug);
+		let network_name = format!("haas_apps_{}", app_id);
 		if app.network_id.is_none() {
 			info!("Creating new network {}", network_name);
 			app.network_id = Some(
@@ -221,7 +221,7 @@ impl Provisioner {
 		// FIXME: currently we assume the port is 80
 		let upstream = format!("{}:80", new_container_ip);
 		//let upstreams_id = format!("haas_apps_{}_upstreams", app_slug);
-		let route_id = format!("haas_apps_{}_route", app_slug);
+		let route_id = format!("haas_apps_{}_route", app_id);
 		// 3. Update the Caddy upstreams to include the new container upstream
 		info!("Updating upstreams (1)");
 		match {
@@ -256,7 +256,7 @@ impl Provisioner {
 					value: Route {
 						r#match: Some(vec![HttpMatchersMap {
 							// FIXME: domains support
-							host: Some(vec![format!("{}.hackclub.app", app_slug)]),
+							host: Some(vec![format!("{}.hackclub.app", &app.slug)]),
 							..Default::default()
 						}
 						.into()]),
@@ -316,7 +316,10 @@ impl Provisioner {
 			))
 			.execute(c)?;
 		info!("Updated database with new container and network ID");
-		info!("Successfully deployed app with slug {}", app_slug);
+		info!(
+			"Successfully deployed app with ID {} (slug={})",
+			app_id, &app.slug
+		);
 		Ok(())
 	}
 }

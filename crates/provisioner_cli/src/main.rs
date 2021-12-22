@@ -6,7 +6,7 @@ use futures_util::TryStreamExt;
 #[clap(version = "0.1")]
 struct Opts {
 	#[clap(long)]
-	slug: String,
+	id: i32,
 	#[clap(subcommand)]
 	subcmd: Subcommand,
 }
@@ -35,7 +35,7 @@ async fn main() -> anyhow::Result<()> {
 	match &opts.subcmd {
 		Subcommand::Build { github_uri, .. } => {
 			let mut s = provisioner
-				.build_image_from_github(&opts.slug, &github_uri.parse()?)
+				.build_image_from_github(opts.id, &github_uri.parse()?)
 				.await?;
 			while let Some(s2) = s.try_next().await? {
 				log::info!("{:?}", s2);
@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
 		}
 		Subcommand::Deploy { database_url, .. } => {
 			let conn = diesel::PgConnection::establish(database_url)?;
-			provisioner.deploy_app(&opts.slug, &conn).await?;
+			provisioner.deploy_app(opts.id, &conn).await?;
 			log::info!("Deploy done!");
 		}
 	}
