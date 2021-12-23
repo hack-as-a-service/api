@@ -14,7 +14,7 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 	if [[ ! -f ~/.haas_deploy_lock ]];
 	then
 		# Set up stuff
-		rm -rf ~/haas_api
+		rm -rf ~/haas_api || true
 		touch ~/.haas_deploy_lock
 	else
 		echo 'Deploy already in progress'
@@ -22,21 +22,17 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 	fi
 EOF
 
-# Upload files to server
-echo "Uploading source to server..."
-rsync -zr --exclude ".git/" --exclude "target/" -e "ssh -i $KEY_PATH" . deploy@$HAAS_IP:~/haas_api
-
 ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 	set -e
 
 	cd ~/haas_api
 
-	# Build the migrator
-	docker build -t haas_migrator -f docker/migrator.Dockerfile .
+	echo -e "\nPulling latest migrator..."
+	docker pull ghcr.io/hack-as-a-service/migrator:main
 
 	# Migrate the DB schema
 	echo -e "\nMigrating database..."
-	docker run --rm -e "DATABASE_URL=$DATABASE_URL" --network haas_admin haas_migrator
+	docker run --rm -e "DATABASE_URL=$DATABASE_URL" --network haas_admin ghcr.io/hack-as-a-service/migrator:main
 
 	echo -e "\nPulling latest image..."
 	docker pull ghcr.io/hack-as-a-service/api:main
@@ -74,7 +70,7 @@ ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 	docker rm haas_api_prev || true
 
 	# Clean up
-	rm -rf ~/haas_api
+	rm -rf ~/haas_api || true
 	rm ~/.haas_deploy_lock
 
 	echo -e "\nDeploy complete :)"
