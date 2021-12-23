@@ -11,15 +11,15 @@ trap 'echo -e "\\n-------------------- SOMETHING WENT WRONG. -------------------
 
 # Check/set deploy lock
 ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
-    if [[ ! -f ~/.haas_deploy_lock ]];
-    then
-        # Set up stuff
-        rm -rf ~/haas_api
-        touch ~/.haas_deploy_lock
-    else
-        echo 'Deploy already in progress'
-        exit 1
-    fi
+	if [[ ! -f ~/.haas_deploy_lock ]];
+	then
+		# Set up stuff
+		rm -rf ~/haas_api
+		touch ~/.haas_deploy_lock
+	else
+		echo 'Deploy already in progress'
+		exit 1
+	fi
 EOF
 
 # Upload files to server
@@ -27,55 +27,55 @@ echo "Uploading source to server..."
 rsync -zr --exclude ".git/" --exclude "target/" -e "ssh -i $KEY_PATH" . deploy@$HAAS_IP:~/haas_api
 
 ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
-    set -e
+	set -e
 
-    cd ~/haas_api
+	cd ~/haas_api
 
-    # Build the migrator
-    docker build -t haas_migrator -f docker/migrator.Dockerfile .
+	# Build the migrator
+	docker build -t haas_migrator -f docker/migrator.Dockerfile .
 
-    # Migrate the DB schema
-    echo -e "\nMigrating database..."
-    docker run --rm -e "DATABASE_URL=$DATABASE_URL" --network haas_admin haas_migrator
+	# Migrate the DB schema
+	echo -e "\nMigrating database..."
+	docker run --rm -e "DATABASE_URL=$DATABASE_URL" --network haas_admin haas_migrator
 
-    echo -e "\nPulling latest image..."
-    docker pull ghcr.io/hack-as-a-service/api:main
+	echo -e "\nPulling latest image..."
+	docker pull ghcr.io/hack-as-a-service/api:main
 
-    echo -e "\nCreating haas_api_next..."
-    HAAS_API_NEXT=\$(docker run -d \
-        --restart always \
-        --env-file ~/.env \
-        --network haas_admin \
-        --name haas_api_next \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        ghcr.io/hack-as-a-service/api:main)
-    
-    HAAS_API_NEXT_IP=\$(docker inspect \$HAAS_API_NEXT | jq -r .[0].NetworkSettings.Networks.haas_admin.IPAddress)
+	echo -e "\nCreating haas_api_next..."
+	HAAS_API_NEXT=\$(docker run -d \
+		--restart always \
+		--env-file ~/.env \
+		--network haas_admin \
+		--name haas_api_next \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		ghcr.io/hack-as-a-service/api:main)
+	
+	HAAS_API_NEXT_IP=\$(docker inspect \$HAAS_API_NEXT | jq -r .[0].NetworkSettings.Networks.haas_admin.IPAddress)
 
-    echo "New container IP: \$HAAS_API_NEXT_IP"
-    
-    # Wait 5 seconds for the API to start up
-    echo -e "\nWaiting impatiently for HaaS to start up..."
-    sleep 5
+	echo "New container IP: \$HAAS_API_NEXT_IP"
+	
+	# Wait 5 seconds for the API to start up
+	echo -e "\nWaiting impatiently for HaaS to start up..."
+	sleep 5
 
-    echo -e "\nSwitching reverse proxy over to new deployment..."
-    # Update Caddy config
-    curl -fs -X PATCH -H "Content-Type: application/json" -d "{\"@id\": \"haas_upstream\", \"dial\": \"\$HAAS_API_NEXT_IP:5000\"}" http://localhost:2019/id/haas_upstream
+	echo -e "\nSwitching reverse proxy over to new deployment..."
+	# Update Caddy config
+	curl -fs -X PATCH -H "Content-Type: application/json" -d "{\"@id\": \"haas_upstream\", \"dial\": \"\$HAAS_API_NEXT_IP:5000\"}" http://localhost:2019/id/haas_upstream
 
-    echo -e "\nRenaming containers..."
-    docker rename haas_api haas_api_prev || true
-    docker rename haas_api_next haas_api
+	echo -e "\nRenaming containers..."
+	docker rename haas_api haas_api_prev || true
+	docker rename haas_api_next haas_api
 
-    echo -e "\nWaiting to make sure all is well with the reverse proxy..."
-    sleep 5
+	echo -e "\nWaiting to make sure all is well with the reverse proxy..."
+	sleep 5
 
-    echo -e "\nShutting down previous deployment..."
-    docker stop haas_api_prev || true
-    docker rm haas_api_prev || true
+	echo -e "\nShutting down previous deployment..."
+	docker stop haas_api_prev || true
+	docker rm haas_api_prev || true
 
-    # Clean up
-    rm -rf ~/haas_api
-    rm ~/.haas_deploy_lock
+	# Clean up
+	rm -rf ~/haas_api
+	rm ~/.haas_deploy_lock
 
-    echo -e "\nDeploy complete :)"
+	echo -e "\nDeploy complete :)"
 EOF
