@@ -25,8 +25,6 @@ EOF
 ssh -T -i $KEY_PATH deploy@$HAAS_IP << EOF
 	set -e
 
-	cd ~/haas_api
-
 	echo -e "\nPulling latest migrator..."
 	docker pull ghcr.io/hack-as-a-service/migrator:main
 
