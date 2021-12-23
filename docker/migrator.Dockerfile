@@ -1,11 +1,13 @@
 # This Docker image performs migrations on the database
 
-FROM rust:1.56
+FROM nixpkgs/nix:nixos-21.11
 
 WORKDIR /usr/src/app
 
-RUN cargo install diesel_cli --no-default-features --features postgres --vers 1.4.1
+RUN nix-channel --add https://nixos.org/channels/nixos-21.11 nixpkgs && \
+    nix-channel --update
+RUN nix-env -iA nixpkgs.diesel-cli
 
 COPY ./migrations ./migrations
 
-CMD ["diesel", "migration", "run"]
+CMD ["/nix/var/nix/profiles/default/bin/diesel", "migration", "run"]
