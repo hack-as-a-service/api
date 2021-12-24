@@ -59,7 +59,21 @@ async fn main() -> anyhow::Result<()> {
 		}
 		Subcommand::Deploy { database_url, .. } => {
 			let conn = diesel::PgConnection::establish(database_url)?;
-			provisioner.deploy_app(opts.id, &conn).await?;
+			let (tx, mut rx) = broadcast::channel(10);
+			let mut build_finish = Box::pin(provisioner.deploy_app(
+				opts.id,
+				&conn,
+				Some(tx),
+			));
+			loop {
+				tokio::select! {
+					ev = rx.recv() => {
+						let ev = ev.unwrap();
+						log::info!("{:?}", ev);
+					},
+					_ = &mut build_finish => break,
+				}
+			}
 			log::info!("Deploy done!");
 		}
 	}
