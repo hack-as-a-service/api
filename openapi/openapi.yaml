@@ -3,7 +3,7 @@ info:
   title: Hack as a Service API
   version: 1.0.0
 servers:
-  - url: https://hackclub.app/api
+  - url: https://haas.hackclub.com/api
     description: Production
   - url: http://localhost:3000/api
     description: Local development

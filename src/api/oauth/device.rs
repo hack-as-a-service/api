@@ -193,7 +193,7 @@ pub async fn create_device_authorization(
 		Ok(Json(DeviceAuthorizationResponse {
 			device_code,
 			user_code,
-			verification_uri: String::from("https://hackclub.app/auth/device"),
+			verification_uri: String::from("https://haas.hackclub.com/auth/device"),
 			expires_in: Some(900),
 		}))
 	})
