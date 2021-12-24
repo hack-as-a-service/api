@@ -4,6 +4,7 @@ use diesel::{pg::PgConnection as PgConn, prelude::*};
 use hyper::{Body, Uri};
 use log::info;
 use thiserror::Error;
+use tokio::sync::broadcast;
 use tokio_stream::Stream;
 
 #[derive(Error, Debug)]
@@ -24,6 +25,12 @@ pub enum ProvisionerError {
 	GitCloneFailed,
 	#[error("Error while deploying: {0}")]
 	DeployError(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum ProvisionerEvent {
+	GitClone(String),
+	DockerBuild(bollard::models::BuildInfo),
 }
 
 pub use bollard;
@@ -54,27 +61,87 @@ impl Provisioner {
 		})
 	}
 
-	pub async fn tarball_body_for_git_uri(uri: &Uri) -> Result<Body> {
+	pub async fn tarball_body_for_git_uri(
+		uri: &Uri,
+		chan: Option<broadcast::Sender<ProvisionerEvent>>,
+	) -> Result<Body> {
 		use mktemp::Temp;
+		use std::process::Stdio;
 		use tokio::{fs, process::Command};
 		use tokio_stream::StreamExt;
 		let clone_dir = Temp::new_path();
-		let status = Command::new("git")
+		let mut child = Command::new("git")
 			.args(&["clone", "--depth=1", &uri.to_string()])
 			.arg(clone_dir.as_os_str())
-			.status()
-			.await?;
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?;
+		let stdout = child.stdout.take().unwrap();
+		let stderr = child.stderr.take().unwrap();
+		let chan2 = chan.clone();
+		tokio::spawn(async move {
+			let chan = match chan2 {
+				Some(c) => c,
+				None => return,
+			};
+			use tokio::io::{AsyncBufReadExt, BufReader};
+			let mut stdout_lines = BufReader::new(stdout).lines();
+			let mut stderr_lines = BufReader::new(stderr).lines();
+			loop {
+				let line = tokio::select! {
+					stdout_line = stdout_lines.next_line() => match stdout_line {
+						Ok(Some(s)) => s,
+						_ => continue,
+					},
+					stderr_line = stderr_lines.next_line() => match stderr_line {
+						Ok(Some(s)) => s,
+						_ => continue,
+					},
+					else => break,
+				};
+				chan.send(ProvisionerEvent::GitClone(line)).unwrap();
+			}
+		});
+		let status = child.wait().await?;
 		if !status.success() {
 			return Err(ProvisionerError::GitCloneFailed);
 		}
 		let archive_path = Temp::new_path();
-		let status = Command::new("git")
+		let mut child = Command::new("git")
 			.args(&["archive", "-o"])
 			.arg(archive_path.as_os_str())
 			.args(&["HEAD"])
 			.current_dir(&clone_dir)
-			.status()
-			.await?;
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?;
+		let stdout = child.stdout.take().unwrap();
+		let stderr = child.stderr.take().unwrap();
+		let chan2 = chan.clone();
+		tokio::spawn(async move {
+			let chan = match chan2 {
+				Some(c) => c,
+				None => return,
+			};
+			use tokio::io::{AsyncBufReadExt, BufReader};
+			let mut stdout_lines = BufReader::new(stdout).lines();
+			let mut stderr_lines = BufReader::new(stderr).lines();
+			loop {
+				let line = tokio::select! {
+					stdout_line = stdout_lines.next_line() => match stdout_line {
+						Ok(Some(s)) => s,
+						_ => continue,
+					},
+					stderr_line = stderr_lines.next_line() => match stderr_line {
+						Ok(Some(s)) => s,
+						_ => continue,
+					},
+					else => break,
+				};
+				chan.send(ProvisionerEvent::GitClone(line)).unwrap();
+			}
+		});
+		let status = child.wait().await?;
 		if !status.success() {
 			return Err(ProvisionerError::GitCloneFailed);
 		}
@@ -102,11 +169,11 @@ impl Provisioner {
 		app_id: i32,
 		app_slug: &str,
 		uri: &Uri,
-	) -> Result<
-		impl Stream<Item = std::result::Result<bollard::models::BuildInfo, bollard::errors::Error>>,
-	> {
-		let body = Self::tarball_body_for_git_uri(uri).await?;
-		Ok(self.docker.build_image(
+		chan: Option<broadcast::Sender<ProvisionerEvent>>,
+	) -> Result<()> {
+		use tokio_stream::StreamExt;
+		let body = Self::tarball_body_for_git_uri(uri, chan.clone()).await?;
+		let mut s = self.docker.build_image(
 			bollard::image::BuildImageOptions {
 				// FIXME: set limits
 				t: image_id_from_app_id(app_id),
@@ -119,7 +186,14 @@ impl Provisioner {
 			},
 			None,
 			Some(body),
-		))
+		);
+		while let Some(ev) = s.next().await {
+			let ev = ev?;
+			if let Some(chan) = &chan {
+				chan.send(ProvisionerEvent::DockerBuild(ev)).unwrap();
+			}
+		}
+		Ok(())
 	}
 
 	/// NB: requires that the app's image has been built using [Self#build_image_from_github].

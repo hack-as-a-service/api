@@ -1,6 +1,6 @@
 use clap::Parser;
 use diesel::prelude::*;
-use futures_util::TryStreamExt;
+use tokio::sync::broadcast;
 
 #[derive(Parser)]
 #[clap(version = "0.1")]
@@ -38,11 +38,17 @@ async fn main() -> anyhow::Result<()> {
 		Subcommand::Build {
 			github_uri, slug, ..
 		} => {
-			let mut s = provisioner
-				.build_image_from_github(opts.id, &slug, &github_uri.parse()?)
-				.await?;
-			while let Some(s2) = s.try_next().await? {
-				log::info!("{:?}", s2);
+			let (tx, mut rx) = broadcast::channel(10);
+			let parsed_uri = github_uri.parse()?;
+			let mut build_finish = Box::pin(provisioner.build_image_from_github(opts.id, &slug, &parsed_uri, Some(tx)));
+			loop {
+				tokio::select! {
+					ev = rx.recv() => {
+						let ev = ev.unwrap();
+						log::info!("{:?}", ev);
+					},
+					_ = &mut build_finish => break,
+				}
 			}
 			log::info!("Build done!");
 		}
