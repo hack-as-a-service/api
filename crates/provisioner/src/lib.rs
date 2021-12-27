@@ -2,7 +2,6 @@ use bollard::Docker;
 use caddy::CaddyClient;
 use diesel::{pg::PgConnection as PgConn, prelude::*};
 use hyper::{Body, Uri};
-use log::info;
 use thiserror::Error;
 use tokio::sync::broadcast;
 use tokio_stream::Stream;
@@ -69,10 +68,29 @@ pub use bollard;
 pub use caddy;
 pub use hyper;
 
-type Result<T> = std::result::Result<T, ProvisionerError>;
+pub type Result<T> = std::result::Result<T, ProvisionerError>;
+type DieselResult<T> = std::result::Result<T, diesel::result::Error>;
 
 fn image_id_from_app_id(app_id: i32) -> String {
 	format!("haas-apps-{}", app_id)
+}
+
+#[async_trait::async_trait]
+pub trait DbRunner {
+	async fn run<U: Send + 'static>(
+		&mut self,
+		f: Box<dyn for<'a> FnOnce(&'a mut PgConn) -> DieselResult<U> + Send + 'static>,
+	) -> DieselResult<U>;
+}
+
+#[async_trait::async_trait]
+impl DbRunner for PgConn {
+	async fn run<U: Send + 'static>(
+		&mut self,
+		f: Box<dyn for<'a> FnOnce(&'a mut PgConn) -> DieselResult<U> + Send + 'static>,
+	) -> DieselResult<U> {
+		f(self)
+	}
 }
 
 pub struct Provisioner {
@@ -233,7 +251,7 @@ impl Provisioner {
 	pub async fn deploy_app(
 		&self,
 		app_id: i32,
-		c: &PgConn,
+		runner: &mut impl DbRunner,
 		chan: Option<broadcast::Sender<ProvisionerEvent>>,
 	) -> Result<()> {
 		use db_models::schema::apps::dsl::{self as apps_dsl, apps, id};
@@ -249,7 +267,11 @@ impl Provisioner {
 			)
 			.unwrap();
 		}
-		let mut app = apps.filter(id.eq(app_id)).first::<App>(c)?;
+		let mut app = runner
+			.run(Box::new(move |c| {
+				Ok(apps.filter(id.eq(app_id)).first::<App>(c)?)
+			}))
+			.await?;
 		// 1. Get or create the app network
 		let network_name = format!("haas_apps_{}", app_id);
 		if app.network_id.is_none() {
@@ -509,12 +531,19 @@ impl Provisioner {
 		// 6. Done! Save the new container id / network id back to the db and return success
 		//info!("Updating database with new container and network ID");
 		app.container_id = Some(new_container);
-		diesel::update(&app)
-			.set((
-				apps_dsl::container_id.eq(&app.container_id),
-				apps_dsl::network_id.eq(&app.network_id),
-			))
-			.execute(c)?;
+		runner
+			.run(Box::new({
+				let app = app.clone();
+				move |c| {
+					Ok(diesel::update(&app)
+						.set((
+							apps_dsl::container_id.eq(&app.container_id),
+							apps_dsl::network_id.eq(&app.network_id),
+						))
+						.execute(c)?)
+				}
+			}))
+			.await?;
 		//info!("Updated database with new container and network ID");
 		if let Some(chan) = &chan {
 			chan.send(

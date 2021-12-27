@@ -18,6 +18,7 @@ serde = { version = "1.0.132", features = ["derive"] }
 
 db_models = { package = "haas_db_models", path = "../db_models" }
 log = "0.4.14"
+async-trait = "0.1.52"
 
 [dependencies.caddy]
 #path = "../../../caddy-rs"
