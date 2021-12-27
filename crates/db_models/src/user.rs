@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use crate::schema::users;
 use serde::Serialize;
 
-#[derive(Debug, Queryable, Serialize, Identifiable)]
+#[derive(Clone, Debug, Queryable, Serialize, Identifiable)]
 pub struct User {
 	pub id: i32,
 	#[serde(skip_serializing)]
@@ -13,7 +13,7 @@ pub struct User {
 	pub avatar: Option<String>,
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Clone, Debug, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
 	pub slack_user_id: String,

@@ -2,7 +2,7 @@ use crate::schema::teams;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Serialize, Identifiable)]
+#[derive(Clone, Debug, Queryable, Serialize, Identifiable)]
 pub struct Team {
 	pub id: i32,
 	#[serde(skip_serializing)]
@@ -13,7 +13,7 @@ pub struct Team {
 	pub slug: String,
 }
 
-#[derive(Debug, Insertable, Deserialize)]
+#[derive(Clone, Debug, Insertable, Deserialize)]
 #[table_name = "teams"]
 pub struct NewTeam {
 	pub name: Option<String>,
@@ -23,7 +23,7 @@ pub struct NewTeam {
 	pub slug: String,
 }
 
-#[derive(Debug, AsChangeset, Deserialize)]
+#[derive(Clone, Debug, AsChangeset, Deserialize)]
 #[table_name = "teams"]
 pub struct UpdatedTeam {
 	pub name: Option<String>,

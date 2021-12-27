@@ -2,7 +2,7 @@ use super::{OauthApp, Token};
 use crate::schema::oauth_device_requests;
 use chrono::NaiveDateTime;
 
-#[derive(Queryable, Identifiable, Debug, Associations)]
+#[derive(Clone, Queryable, Identifiable, Debug, Associations)]
 #[belongs_to(OauthApp)]
 #[belongs_to(Token, foreign_key = "token")]
 pub struct OauthDeviceRequest {
@@ -17,7 +17,7 @@ pub struct OauthDeviceRequest {
 	pub access_denied: bool,
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Clone, Insertable, Debug)]
 #[table_name = "oauth_device_requests"]
 pub struct NewOauthDeviceRequest<'a> {
 	pub oauth_app_id: &'a str,

@@ -3,7 +3,7 @@ use crate::team::Team;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Serialize, Identifiable, Associations)]
+#[derive(Clone, Debug, Queryable, Serialize, Identifiable, Associations)]
 #[belongs_to(Team)]
 pub struct App {
 	pub id: i32,
@@ -17,7 +17,7 @@ pub struct App {
 	pub network_id: Option<String>,
 }
 
-#[derive(Insertable, Deserialize, Debug)]
+#[derive(Clone, Insertable, Deserialize, Debug)]
 #[table_name = "apps"]
 pub struct NewApp {
 	pub slug: String,

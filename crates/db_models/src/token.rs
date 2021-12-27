@@ -2,7 +2,7 @@ use crate::schema::tokens;
 use crate::user::User;
 use chrono::NaiveDateTime;
 
-#[derive(Debug, Queryable, Identifiable, Associations)]
+#[derive(Clone, Debug, Queryable, Identifiable, Associations)]
 #[primary_key(token)]
 #[table_name = "tokens"]
 #[belongs_to(User)]
@@ -13,7 +13,7 @@ pub struct Token {
 	pub user_id: i32,
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Clone, Debug, Insertable)]
 #[table_name = "tokens"]
 pub struct NewToken<'a> {
 	pub token: &'a str,

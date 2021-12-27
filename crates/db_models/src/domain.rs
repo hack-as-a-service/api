@@ -2,7 +2,7 @@ use super::app::App;
 use crate::schema::domains;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Serialize, Identifiable, Associations)]
+#[derive(Clone, Debug, Queryable, Serialize, Identifiable, Associations)]
 #[belongs_to(App)]
 pub struct Domain {
 	pub id: i32,
@@ -11,7 +11,7 @@ pub struct Domain {
 	pub app_id: i32,
 }
 
-#[derive(Deserialize, Debug, Insertable)]
+#[derive(Clone, Deserialize, Debug, Insertable)]
 #[table_name = "domains"]
 pub struct NewDomain {
 	pub domain: String,
