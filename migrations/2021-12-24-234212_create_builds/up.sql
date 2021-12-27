@@ -1,0 +1,8 @@
+-- Your SQL goes here
+CREATE TABLE builds (
+	id SERIAL PRIMARY KEY,
+	started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	ended_at TIMESTAMP,
+	events TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+	app_id INTEGER NOT NULL REFERENCES apps (id)
+)

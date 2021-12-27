@@ -11,6 +11,16 @@ table! {
 }
 
 table! {
+	builds (id) {
+		id -> Int4,
+		started_at -> Timestamp,
+		ended_at -> Nullable<Timestamp>,
+		events -> Array<Text>,
+		app_id -> Int4,
+	}
+}
+
+table! {
 	domains (id) {
 		id -> Int4,
 		domain -> Text,
@@ -84,6 +94,7 @@ table! {
 }
 
 joinable!(apps -> teams (team_id));
+joinable!(builds -> apps (app_id));
 joinable!(domains -> apps (app_id));
 joinable!(oauth_device_requests -> oauth_apps (oauth_app_id));
 joinable!(oauth_device_requests -> tokens (token));
@@ -93,6 +104,7 @@ joinable!(tokens -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
 	apps,
+	builds,
 	domains,
 	oauth_apps,
 	oauth_device_requests,

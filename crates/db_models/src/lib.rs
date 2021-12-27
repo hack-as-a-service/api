@@ -3,6 +3,8 @@ extern crate diesel;
 
 mod app;
 pub use app::*;
+mod build;
+pub use build::*;
 mod domain;
 pub use domain::*;
 mod oauth_app;
