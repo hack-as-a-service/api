@@ -84,7 +84,7 @@ mod url_serializer {
 }
 
 pub struct ProvisionerManager {
-	provisioner: Provisioner,
+	provisioner: Arc<Provisioner>,
 	event_channels: HashMap<i32, Sender<ProvisionerEvent2>>,
 }
 
@@ -94,16 +94,16 @@ impl ProvisionerManager {
 			.extract_inner::<ProvisionerConfig>("provisioner")
 			.expect("Failed to extract config from figment");
 		Ok(Self {
-			provisioner: Provisioner::connecting_with_local_defaults(
+			provisioner: Arc::new(Provisioner::connecting_with_local_defaults(
 				c.caddy_api_base,
 				c.caddy_container_name,
-			)?,
+			)?),
 			event_channels: Default::default(),
 		})
 	}
 
 	pub async fn create_build(
-		self: Arc<Self>,
+		&mut self,
 		conn: Arc<DbConn>,
 		git_uri: Uri,
 		app_id: i32,
@@ -145,39 +145,48 @@ impl ProvisionerManager {
 				}
 			}
 		});
+		let (tx2, mut rx2) = broadcast::channel(10);
 		// Start the build / deploy
-		tokio::spawn(async move {
-			let (tx2, mut rx2) = broadcast::channel(10);
-			let tx_clone = tx.clone();
-			tokio::spawn(async move {
-				loop {
-					match rx2.recv().await {
-						Ok(ev) => {
-							tx_clone.send(ProvisionerEvent2::make(Ok(ev))).unwrap();
+		let provisioner = Arc::clone(&self.provisioner);
+		tokio::spawn({
+			let tx = tx.clone();
+			async move {
+				let tx_clone = tx.clone();
+				tokio::spawn(async move {
+					loop {
+						match rx2.recv().await {
+							Ok(ev) => {
+								tx_clone.send(ProvisionerEvent2::make(Ok(ev))).unwrap();
+							}
+							Err(broadcast::error::RecvError::Closed) => break,
+							_ => {}
 						}
-						Err(broadcast::error::RecvError::Closed) => break,
-						_ => {}
 					}
+				});
+				let runner = PooledDbRunner { c: conn.clone() };
+				let br = provisioner
+					.build_image_from_github(app_id, &app_slug, &git_uri, Some(tx2.clone()))
+					.await;
+				if let Err(e) = br {
+					tx.send(ProvisionerEvent2::make(Err(e.to_string())))
+						.unwrap();
 				}
-			});
-			let runner = PooledDbRunner { c: conn.clone() };
-			let br = self
-				.provisioner
-				.build_image_from_github(app_id, &app_slug, &git_uri, Some(tx2.clone()))
-				.await;
-			if let Err(e) = br {
-				tx.send(ProvisionerEvent2::make(Err(e.to_string())))
-					.unwrap();
-			}
-			let dr = self
-				.provisioner
-				.deploy_app(app_id, &mut &runner, Some(tx2.clone()))
-				.await;
-			if let Err(e) = dr {
-				tx.send(ProvisionerEvent2::make(Err(e.to_string())))
-					.unwrap();
+				let dr = provisioner
+					.deploy_app(app_id, &mut &runner, Some(tx2.clone()))
+					.await;
+				if let Err(e) = dr {
+					tx.send(ProvisionerEvent2::make(Err(e.to_string())))
+						.unwrap();
+				}
 			}
 		});
-		Ok(5)
+		self.event_channels.insert(build.id, tx);
+		Ok(build.id)
+	}
+
+	pub fn receiver_for_build(&self, id: i32) -> Option<broadcast::Receiver<ProvisionerEvent2>> {
+		self.event_channels
+			.get(&id)
+			.map(broadcast::Sender::subscribe)
 	}
 }
