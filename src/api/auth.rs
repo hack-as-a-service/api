@@ -14,7 +14,7 @@ use time::Duration;
 use db_models::{NewTeam, NewToken, NewUser, Team, TeamUser, Token, User};
 
 use crate::{
-	slack::{exchange_code, user_info},
+	slack::{exchange_code, parse_id_token},
 	utils::{slug::into_slug, token::generate_token},
 	DbConn,
 };
@@ -103,11 +103,10 @@ pub async fn code(
 		None => return Ok(Redirect::found("/")),
 	};
 
-	let access_token = exchange_code(code, &client_id, &client_secret, &redirect_uri)
+	let token_response = exchange_code(code, &client_id, &client_secret, &redirect_uri)
 		.await
 		.ok_or(Status::InternalServerError)?;
-	let info = user_info(&access_token)
-		.await
+	let info = parse_id_token(&token_response.id_token.ok_or(Status::InternalServerError)?)
 		.map_err(|_| Status::InternalServerError)?;
 
 	// let whitelisted = if env::var("HAAS_PRODUCTION").is_err() {

@@ -26,6 +26,7 @@ base64 = "0.13.0"
 form_urlencoded = "1.0.1"
 
 db_models = {package = "haas_db_models", path = "crates/db_models"}
+jsonwebtoken = "7.2.0"
 
 [dependencies.rocket_sync_db_pools]
 default-features = false
