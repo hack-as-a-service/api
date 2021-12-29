@@ -70,7 +70,7 @@ pub async fn logout(conn: DbConn, cookies: &CookieJar<'_>) -> Redirect {
 		let value = cookie.value().to_owned();
 
 		conn.run(|c| {
-			use crate::schema::tokens::dsl::*;
+			use db_models::schema::tokens::dsl::*;
 
 			diesel::delete(tokens.filter(token.eq(value)))
 				.execute(c)

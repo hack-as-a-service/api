@@ -1,7 +1,4 @@
 #[macro_use]
-extern crate diesel;
-
-#[macro_use]
 extern crate rocket;
 
 #[macro_use]
@@ -15,7 +12,6 @@ use trust_dns_client::{client::AsyncClient, udp::UdpClientStream};
 
 mod api;
 mod auth;
-mod schema;
 mod slack;
 mod utils;
 
