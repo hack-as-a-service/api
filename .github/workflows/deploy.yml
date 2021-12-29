@@ -16,12 +16,7 @@ jobs:
         name: Install SSH key
       - run: echo "167.99.113.134 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIV4nOfENhtxnlRPutfcJQhuBaiXYCaU6e93BnI8y0WVEPXLirzgHAujtT0TZ6HAgIXvj+ZMqbJRZSKoN5wCuDk=" > ~/.ssh/known_hosts
         name: Trust SSH host
-      - run: ./scripts/deploy
-        name: Deploy API
-        env:
-          KEY_PATH: ~/.ssh/id_rsa
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          HAAS_IP: "167.99.113.134"
+      - run: "echo 'deploy --image ghcr.io/hack-as-a-service/api --name haas_api --port 5000' | ssh -T -i ~/.ssh/id_rsa deploy@167.99.113.134"
   docker:
     name: Docker
     runs-on: ubuntu-latest

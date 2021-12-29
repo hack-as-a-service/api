@@ -27,8 +27,7 @@ pub enum ProvisionerError {
 	DeployError(String),
 }
 
-#[derive(Debug, Clone)]
-#[derive(serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type", content = "event")]
 pub enum ProvisionerEvent {
@@ -37,8 +36,7 @@ pub enum ProvisionerEvent {
 	Deploy(ProvisionerDeployEvent),
 }
 
-#[derive(Debug, Clone)]
-#[derive(serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "deploy")]
 pub enum ProvisionerDeployEvent {
@@ -232,19 +230,37 @@ impl Provisioner {
 
 	/// NB: requires that the app's image has been built using [Self#build_image_from_github].
 	/// !!! This does not do any privilege checks
-	pub async fn deploy_app(&self, app_id: i32, c: &PgConn, chan: Option<broadcast::Sender<ProvisionerEvent>>) -> Result<()> {
+	pub async fn deploy_app(
+		&self,
+		app_id: i32,
+		c: &PgConn,
+		chan: Option<broadcast::Sender<ProvisionerEvent>>,
+	) -> Result<()> {
 		use db_models::schema::apps::dsl::{self as apps_dsl, apps, id};
 		use db_models::App;
 		let image_id = image_id_from_app_id(app_id);
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::DeployBegin { app_id, image_id: image_id.clone() }.into()).unwrap();
+			chan.send(
+				ProvisionerDeployEvent::DeployBegin {
+					app_id,
+					image_id: image_id.clone(),
+				}
+				.into(),
+			)
+			.unwrap();
 		}
 		let mut app = apps.filter(id.eq(app_id)).first::<App>(c)?;
 		// 1. Get or create the app network
 		let network_name = format!("haas_apps_{}", app_id);
 		if app.network_id.is_none() {
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::CreatingNetwork { network_name: network_name.clone() }.into()).unwrap();
+				chan.send(
+					ProvisionerDeployEvent::CreatingNetwork {
+						network_name: network_name.clone(),
+					}
+					.into(),
+				)
+				.unwrap();
 			}
 			app.network_id = Some(
 				self.docker
@@ -258,8 +274,20 @@ impl Provisioner {
 					.expect("Network create returns id"),
 			);
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::CreatedNetwork { network_id: app.network_id.as_ref().unwrap().clone() }.into()).unwrap();
-				chan.send(ProvisionerDeployEvent::Other { log: "Adding caddy to the new network...".to_owned() }.into()).unwrap();
+				chan.send(
+					ProvisionerDeployEvent::CreatedNetwork {
+						network_id: app.network_id.as_ref().unwrap().clone(),
+					}
+					.into(),
+				)
+				.unwrap();
+				chan.send(
+					ProvisionerDeployEvent::Other {
+						log: "Adding caddy to the new network...".to_owned(),
+					}
+					.into(),
+				)
+				.unwrap();
 			}
 			self.docker
 				.connect_network(
@@ -271,17 +299,30 @@ impl Provisioner {
 				)
 				.await?;
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::Other { log: "Added caddy to the new network".to_owned() }.into()).unwrap();
+				chan.send(
+					ProvisionerDeployEvent::Other {
+						log: "Added caddy to the new network".to_owned(),
+					}
+					.into(),
+				)
+				.unwrap();
 			}
 		} else {
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::UsingExistingNetwork { network_id: app.network_id.as_ref().unwrap().clone() }.into()).unwrap();
+				chan.send(
+					ProvisionerDeployEvent::UsingExistingNetwork {
+						network_id: app.network_id.as_ref().unwrap().clone(),
+					}
+					.into(),
+				)
+				.unwrap();
 			}
 		}
 		// Safe to unwrap: checked None case above
 		let network_id = app.network_id.as_deref().unwrap();
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::CreatingNewContainer.into()).unwrap();
+			chan.send(ProvisionerDeployEvent::CreatingNewContainer.into())
+				.unwrap();
 		}
 		// 2. Create the new container, attached to the new network
 		let new_container = self
@@ -305,16 +346,25 @@ impl Provisioner {
 			.await?
 			.id;
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::CreatedNewContainer { container_id: new_container.clone() }.into()).unwrap();
-			chan.send(ProvisionerDeployEvent::StartingNewContainer.into()).unwrap();
+			chan.send(
+				ProvisionerDeployEvent::CreatedNewContainer {
+					container_id: new_container.clone(),
+				}
+				.into(),
+			)
+			.unwrap();
+			chan.send(ProvisionerDeployEvent::StartingNewContainer.into())
+				.unwrap();
 		}
 		// 2.b. Start the new container
 		self.docker
 			.start_container::<&str>(&new_container, None)
 			.await?;
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::StartedNewContainer.into()).unwrap();
-			chan.send(ProvisionerDeployEvent::RetrievingContainerIP.into()).unwrap();
+			chan.send(ProvisionerDeployEvent::StartedNewContainer.into())
+				.unwrap();
+			chan.send(ProvisionerDeployEvent::RetrievingContainerIP.into())
+				.unwrap();
 		}
 		// 2.c. Get the container's IP
 		let new_container_info = self.docker.inspect_container(&new_container, None).await?;
@@ -338,8 +388,15 @@ impl Provisioner {
 			Ok::<_, ProvisionerError>(ip.split('/').next().unwrap().to_string())
 		}?;
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::RetrievedContainerIP { container_ip: new_container_ip.clone() }.into()).unwrap();
-			chan.send(ProvisionerDeployEvent::AddingNewContainerAsUpstream.into()).unwrap();
+			chan.send(
+				ProvisionerDeployEvent::RetrievedContainerIP {
+					container_ip: new_container_ip.clone(),
+				}
+				.into(),
+			)
+			.unwrap();
+			chan.send(ProvisionerDeployEvent::AddingNewContainerAsUpstream.into())
+				.unwrap();
 		}
 		// FIXME: currently we assume the port is 80
 		let upstream = format!("{}:80", new_container_ip);
@@ -369,7 +426,13 @@ impl Provisioner {
 			Err(_) => {
 				use caddy::types::*;
 				if let Some(chan) = &chan {
-					chan.send(ProvisionerDeployEvent::CreatingNewRoute { route_id: route_id.clone() }.into()).unwrap();
+					chan.send(
+						ProvisionerDeployEvent::CreatingNewRoute {
+							route_id: route_id.clone(),
+						}
+						.into(),
+					)
+					.unwrap();
 				}
 				// FIXME: using a static path to routes
 				let handle = self
@@ -410,7 +473,8 @@ impl Provisioner {
 		tokio::time::sleep(tokio::time::Duration::from_millis(5000)).await;
 		// 5. Replace the upstreams list with only the new container ID
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::RemovingOldContainerAsUpstream.into()).unwrap();
+			chan.send(ProvisionerDeployEvent::RemovingOldContainerAsUpstream.into())
+				.unwrap();
 		}
 		let handle =
 			self.caddy
@@ -425,11 +489,18 @@ impl Provisioner {
 		//info!("Updated upstreams");
 		if let Some(old_container_id) = &app.container_id {
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::StoppingOldContainer { container_id: old_container_id.clone() }.into()).unwrap();
+				chan.send(
+					ProvisionerDeployEvent::StoppingOldContainer {
+						container_id: old_container_id.clone(),
+					}
+					.into(),
+				)
+				.unwrap();
 			}
 			self.docker.stop_container(old_container_id, None).await?;
 			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::DeletingOldContainer.into()).unwrap();
+				chan.send(ProvisionerDeployEvent::DeletingOldContainer.into())
+					.unwrap();
 			}
 			self.docker.remove_container(old_container_id, None).await?;
 		} else {
@@ -446,7 +517,14 @@ impl Provisioner {
 			.execute(c)?;
 		//info!("Updated database with new container and network ID");
 		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::DeployEnd { app_id, app_slug: app.slug.clone() }.into()).unwrap();
+			chan.send(
+				ProvisionerDeployEvent::DeployEnd {
+					app_id,
+					app_slug: app.slug.clone(),
+				}
+				.into(),
+			)
+			.unwrap();
 		}
 		Ok(())
 	}
