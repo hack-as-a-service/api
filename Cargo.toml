@@ -16,6 +16,8 @@ regex = "1.5.4"
 reqwest = {version = "0.11.6", features = ["json"]}
 time = "0.2.25"
 
+tokio = {version = "1.15.0", features = ["full"]}
+
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
 
 serde = {version = "1.0", features = ["derive"]}
@@ -26,6 +28,8 @@ base64 = "0.13.0"
 form_urlencoded = "1.0.1"
 
 db_models = {package = "haas_db_models", path = "crates/db_models"}
+provisioner = {package = "haas_provisioner", path = "crates/provisioner"}
+
 jsonwebtoken = "7.2.0"
 
 [dependencies.rocket_sync_db_pools]

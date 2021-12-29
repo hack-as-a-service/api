@@ -12,6 +12,7 @@ use trust_dns_client::{client::AsyncClient, udp::UdpClientStream};
 
 mod api;
 mod auth;
+mod provision;
 mod slack;
 mod utils;
 

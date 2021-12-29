@@ -1,6 +1,11 @@
 [default]
 address = "0.0.0.0"
 port = 5000
+provisioner = {caddy_api_base = "http://caddy:2019/", caddy_container_name = "caddy"}
 
 [global.databases]
 db = {url = "postgres://postgres:postgres@localhost:5432/postgres"}
+
+# Only applied in debug mode (i.e. local development)
+[debug]
+provisioner = {caddy_api_base = "http://localhost:2019", caddy_container_name = "caddy-server"}
