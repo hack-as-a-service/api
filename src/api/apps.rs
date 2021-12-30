@@ -6,11 +6,11 @@ use diesel::{
 		Error::{self, DatabaseError, NotFound},
 	},
 };
-use rocket::{http::Status, serde::json::Json};
+use rocket::{http::Status, serde::json::Json, tokio::sync::RwLock, State};
 
-use db_models::{App, Domain, NewApp, NewDomain, Team, TeamUser};
+use db_models::{App, Build, Domain, NewApp, NewDomain, Team, TeamUser};
 
-use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
+use crate::{auth::AuthUser, provision::ProvisionerManager, utils::slug::validate_slug, DbConn};
 
 #[get("/apps/<app_slug>")]
 pub async fn app(app_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<App>, Status> {
@@ -129,4 +129,68 @@ pub async fn domains(
 		Ok(Json(domains))
 	})
 	.await
+}
+
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct NewDeploy {
+	#[serde(with = "crate::utils::uri_serializer")]
+	git_repository: provisioner::hyper::Uri,
+}
+
+#[post("/apps/<app_slug>/deploy", data = "<deploy>")]
+pub async fn deploy(
+	app_slug: String,
+	user: AuthUser,
+	deploy: Json<NewDeploy>,
+	conn: DbConn,
+	provisioner_manager: &State<RwLock<ProvisionerManager>>,
+) -> Result<(Status, Json<Build>), Status> {
+	let app = conn
+		.run(move |c| {
+			use db_models::schema::apps::dsl::{apps, slug};
+			use db_models::schema::team_users::dsl::{team_users, user_id};
+			use db_models::schema::teams::dsl::teams;
+
+			let app = apps
+				.inner_join(teams.inner_join(team_users))
+				.filter(user_id.eq(user.id).and(slug.eq(app_slug)))
+				.first::<(App, (Team, TeamUser))>(c)
+				.map_err(|e| {
+					if e == NotFound {
+						Status::NotFound
+					} else {
+						Status::InternalServerError
+					}
+				})?;
+
+			Ok(app.0)
+		})
+		.await?;
+	// FIXME: Change to a 303 /builds/{id} once we have that route set up
+	let existing_build = conn
+		.run({
+			let app = app.clone();
+			move |c| {
+				use db_models::schema::builds::dsl::{app_id, builds, ended_at};
+
+				let build = builds
+					.filter(app_id.eq(app.id).and(ended_at.is_null()))
+					.first::<Build>(c)
+					.optional()
+					.map_err(|_| Status::InternalServerError)?;
+				Ok(build)
+			}
+		})
+		.await?;
+	if let Some(existing_build) = existing_build {
+		// Somehow make this a 200?
+		return Ok((Status::Ok, Json(existing_build)));
+	}
+	let mut provisioner_manager = provisioner_manager.write().await;
+	let conn = std::sync::Arc::new(conn);
+	let new_build = provisioner_manager
+		.create_build(conn, deploy.git_repository.clone(), app.id, &app.slug)
+		.await
+		.map_err(|_| Status::InternalServerError)?;
+	Ok((Status::Accepted, Json(new_build)))
 }

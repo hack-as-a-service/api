@@ -46,43 +46,9 @@ impl provisioner::DbRunner for &PooledDbRunner {
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct ProvisionerConfig {
-	#[serde(with = "url_serializer")]
+	#[serde(with = "crate::utils::url_serializer")]
 	caddy_api_base: provisioner::caddy::Url,
 	caddy_container_name: String,
-}
-
-mod url_serializer {
-	use provisioner::caddy::Url;
-	use serde::de::{
-		Deserializer, Error as DeError, Unexpected as DeUnexpected, Visitor as DeVisitor,
-	};
-	use serde::ser::Serializer;
-
-	pub fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Url, D::Error> {
-		struct UrlVisitor;
-
-		impl<'de> DeVisitor<'de> for UrlVisitor {
-			type Value = Url;
-
-			fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-			where
-				E: serde::de::Error,
-			{
-				v.parse()
-					.map_err(|_| DeError::invalid_value(DeUnexpected::Str(v), &self))
-			}
-
-			fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-				write!(formatter, "a URI")
-			}
-		}
-
-		de.deserialize_str(UrlVisitor)
-	}
-
-	pub fn serialize<S: Serializer>(url: &Url, ser: S) -> Result<S::Ok, S::Error> {
-		ser.serialize_str(&url.to_string())
-	}
 }
 
 pub struct ProvisionerManager {
@@ -110,7 +76,7 @@ impl ProvisionerManager {
 		git_uri: Uri,
 		app_id: i32,
 		app_slug: &str,
-	) -> diesel::QueryResult<i32> {
+	) -> diesel::QueryResult<db_models::Build> {
 		use db_models::schema::builds::dsl::builds;
 		use db_models::{Build, NewBuild};
 		let app_slug = app_slug.to_owned();
@@ -129,6 +95,11 @@ impl ProvisionerManager {
 			loop {
 				match rx.recv().await {
 					Ok(ev) => {
+						// please don't add overhead please don't add
+						// overhead
+						if let Ok(debug_ev) = serde_json::to_string(&ev) {
+							println!("debug: event: {}", debug_ev);
+						}
 						conn2
 							.run(move |c| {
 								// Diesel doesn't support array_append
@@ -183,7 +154,7 @@ impl ProvisionerManager {
 			}
 		});
 		self.event_channels.insert(build.id, tx);
-		Ok(build.id)
+		Ok(build)
 	}
 
 	pub fn receiver_for_build(&self, id: i32) -> Option<broadcast::Receiver<ProvisionerEvent2>> {

@@ -379,6 +379,47 @@ paths:
           description: App not found
         "401":
           description: Unauthorized
+  /apps/{slug}/deploy:
+    post:
+      summary: Deploy an app
+      tags:
+        - Apps
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          example: dinopoll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                git_repository:
+                  type: string
+                  format: uri
+              required:
+                - git_repository
+              example:
+                git_repository: https://github.com/docker/getting-started
+      responses:
+        "202":
+          description: Deploy has started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+        "500":
+          description: Internal server error
+        "409":
+          description: Conflict
+        "404":
+          description: App not found
+        "401":
+          description: Unauthorized
   /domains/{id}/verify:
     post:
       summary: Attempt to verify a domain
@@ -513,3 +554,34 @@ components:
         app_id: 5
         domain: dinopoll.hackclub.app
         verified: true
+    Build:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        events:
+          type: array
+          items:
+            type: string
+            format: json
+          readOnly: true
+        app_id:
+          type: integer
+          readOnly: true
+      # No properties are required, since all are read only
+    example:
+      id: 3
+      started_at: 2021-12-30T21:32:01+00:00
+      ended_at: null
+      events: []
+      app_id: 2

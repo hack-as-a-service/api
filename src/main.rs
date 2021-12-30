@@ -36,7 +36,7 @@ async fn rocket() -> _ {
 
 	rocket::tokio::spawn(bg);
 
-	rocket::build()
+	let r = rocket::build()
 		.mount(
 			"/api",
 			routes![
@@ -47,6 +47,7 @@ async fn rocket() -> _ {
 				api::apps::app,
 				api::apps::create,
 				api::apps::domains,
+				api::apps::deploy, // experimental - please do not use
 				api::dev::login,
 				api::domains::create,
 				api::domains::verify,
@@ -66,5 +67,11 @@ async fn rocket() -> _ {
 			],
 		)
 		.attach(DbConn::fairing())
-		.manage(RwLock::new(dns_client))
+		.manage(RwLock::new(dns_client));
+
+	// Setup provisioner manager (requires figment)
+	let provisioner_manager = provision::ProvisionerManager::from_figment(&r.figment())
+		.expect("Error instantiating provisioner manager");
+
+	r.manage(RwLock::new(provisioner_manager))
 }
