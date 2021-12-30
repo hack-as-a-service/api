@@ -40,12 +40,8 @@ async fn main() -> anyhow::Result<()> {
 		} => {
 			let (tx, mut rx) = broadcast::channel(10);
 			let parsed_uri = github_uri.parse()?;
-			let mut build_finish = Box::pin(provisioner.build_image_from_github(
-				opts.id,
-				slug,
-				&parsed_uri,
-				Some(tx),
-			));
+			let mut build_finish =
+				Box::pin(provisioner.build_image_from_github(opts.id, slug, &parsed_uri, Some(tx)));
 			loop {
 				tokio::select! {
 					ev = rx.recv() => {
