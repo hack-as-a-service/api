@@ -269,7 +269,7 @@ impl Provisioner {
 		}
 		let mut app = runner
 			.run(Box::new(move |c| {
-				Ok(apps.filter(id.eq(app_id)).first::<App>(c)?)
+				apps.filter(id.eq(app_id)).first::<App>(c)
 			}))
 			.await?;
 		// 1. Get or create the app network
@@ -329,16 +329,14 @@ impl Provisioner {
 				)
 				.unwrap();
 			}
-		} else {
-			if let Some(chan) = &chan {
-				chan.send(
-					ProvisionerDeployEvent::UsingExistingNetwork {
-						network_id: app.network_id.as_ref().unwrap().clone(),
-					}
-					.into(),
-				)
-				.unwrap();
-			}
+		} else if let Some(chan) = &chan {
+			chan.send(
+				ProvisionerDeployEvent::UsingExistingNetwork {
+					network_id: app.network_id.as_ref().unwrap().clone(),
+				}
+				.into(),
+			)
+			.unwrap();
 		}
 		// Safe to unwrap: checked None case above
 		let network_id = app.network_id.as_deref().unwrap();
@@ -535,12 +533,12 @@ impl Provisioner {
 			.run(Box::new({
 				let app = app.clone();
 				move |c| {
-					Ok(diesel::update(&app)
+					diesel::update(&app)
 						.set((
 							apps_dsl::container_id.eq(&app.container_id),
 							apps_dsl::network_id.eq(&app.network_id),
 						))
-						.execute(c)?)
+						.execute(c)
 				}
 			}))
 			.await?;

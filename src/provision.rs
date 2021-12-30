@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Remove once we have the API routes for this
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
