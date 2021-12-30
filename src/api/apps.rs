@@ -145,6 +145,12 @@ pub async fn deploy(
 	conn: DbConn,
 	provisioner_manager: &State<RwLock<ProvisionerManager>>,
 ) -> Result<(Status, Json<Build>), Status> {
+	#[cfg(not(debug_assertions))]
+	{
+		println!("someone tried to deploy in prod, pls no");
+		return Err(Status::ServiceUnavailable);
+	}
+
 	let app = conn
 		.run(move |c| {
 			use db_models::schema::apps::dsl::{apps, slug};
