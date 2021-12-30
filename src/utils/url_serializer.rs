@@ -8,7 +8,7 @@ pub fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Url, D::Error> {
 	impl<'de> DeVisitor<'de> for UrlVisitor {
 		type Value = Url;
 
-		fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+		fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
 		where
 			E: serde::de::Error,
 		{
@@ -17,7 +17,7 @@ pub fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Url, D::Error> {
 		}
 
 		fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-			write!(formatter, "a URI")
+			write!(formatter, "a URL")
 		}
 	}
 
