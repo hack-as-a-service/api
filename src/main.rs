@@ -70,7 +70,7 @@ async fn rocket() -> _ {
 		.manage(RwLock::new(dns_client));
 
 	// Setup provisioner manager (requires figment)
-	let provisioner_manager = provision::ProvisionerManager::from_figment(&r.figment())
+	let provisioner_manager = provision::ProvisionerManager::from_figment(r.figment())
 		.expect("Error instantiating provisioner manager");
 
 	r.manage(RwLock::new(provisioner_manager))

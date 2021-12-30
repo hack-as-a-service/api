@@ -24,6 +24,7 @@ pub fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Uri, D::Error> {
 	de.deserialize_str(UriVisitor)
 }
 
+#[allow(dead_code)]
 pub fn serialize<S: Serializer>(uri: &Uri, ser: S) -> Result<S::Ok, S::Error> {
 	ser.serialize_str(&uri.to_string())
 }

@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
 			let parsed_uri = github_uri.parse()?;
 			let mut build_finish = Box::pin(provisioner.build_image_from_github(
 				opts.id,
-				&slug,
+				slug,
 				&parsed_uri,
 				Some(tx),
 			));
