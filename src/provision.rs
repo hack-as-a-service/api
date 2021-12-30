@@ -102,14 +102,23 @@ impl ProvisionerManager {
 						}
 						conn2
 							.run(move |c| {
-								// Diesel doesn't support array_append
-								diesel::sql_query(
-								"UPDATE builds SET events = array_append(events, ?) WHERE id = ?",
-							)
-							.bind::<diesel::sql_types::Text, _>(serde_json::to_string(&ev).unwrap())
-							.bind::<diesel::sql_types::Integer, _>(build_id)
-							.execute(c)
-							.unwrap();
+								use db_models::schema::builds::dsl::{events, id};
+								use diesel::{dsl::sql, sql_types::Text};
+
+								let q = diesel::update(builds).filter(id.eq(build_id)).set(
+									// diesel doesn't have a
+									// query builder for
+									// array_append
+									events.eq(sql("array_append(events, ")
+										.bind::<Text, _>(serde_json::to_string(&ev).unwrap())
+										.sql(")")),
+								);
+								#[cfg(debug_assertions)]
+								println!(
+									"query = {}",
+									diesel::debug_query::<diesel::pg::Pg, _>(&q)
+								);
+								q.execute(c).unwrap();
 							})
 							.await;
 					}
