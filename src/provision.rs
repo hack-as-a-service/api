@@ -98,7 +98,7 @@ impl ProvisionerManager {
 						// please don't add overhead please don't add
 						// overhead
 						if let Ok(debug_ev) = serde_json::to_string(&ev) {
-							println!("debug: event: {}", debug_ev);
+							println!("debug: build {} event: {}", build_id, debug_ev);
 						}
 						conn2
 							.run(move |c| {
@@ -117,6 +117,17 @@ impl ProvisionerManager {
 					_ => {}
 				}
 			}
+			conn2
+				.run(move |c| {
+					use db_models::schema::builds::dsl::{ended_at, id};
+
+					diesel::update(builds)
+						.filter(id.eq(build_id))
+						.set(ended_at.eq(chrono::Utc::now().naive_utc()))
+						.execute(c)
+						.unwrap();
+				})
+				.await;
 		});
 		let (tx2, mut rx2) = broadcast::channel(10);
 		// Start the build / deploy
