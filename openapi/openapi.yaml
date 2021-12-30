@@ -406,6 +406,13 @@ paths:
               example:
                 git_repository: https://github.com/docker/getting-started
       responses:
+        # FIXME: change to 303, also see source
+        "200":
+          description: Deploy already in progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
         "202":
           description: Deploy has started
           content:
