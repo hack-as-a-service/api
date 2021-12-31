@@ -12,26 +12,40 @@ use db_models::{App, Build, Domain, NewApp, NewDomain, Team, TeamUser};
 
 use crate::{auth::AuthUser, provision::ProvisionerManager, utils::slug::validate_slug, DbConn};
 
+/// Fetches an app by the `slug`, which can either be an App.slug or a numeric App.id
+fn fetch_app(app_slug: String, user_id: i32, c: &diesel::PgConnection) -> QueryResult<App> {
+	use db_models::schema::apps::dsl::*;
+	use db_models::schema::{team_users, teams};
+
+	// Attempt to parse out a numeric ID
+	let app = match app_slug.parse::<i32>() {
+		Ok(i) => apps
+			.inner_join(teams::table.inner_join(team_users::table))
+			.filter(id.eq(i).and(team_users::user_id.eq(user_id)))
+			.first::<(App, (Team, TeamUser))>(c)
+			.map(|x| x.0)?,
+		Err(_) => apps
+			.inner_join(teams::table.inner_join(team_users::table))
+			.filter(slug.eq(app_slug).and(team_users::user_id.eq(user_id)))
+			.first::<(App, (Team, TeamUser))>(c)
+			.map(|x| x.0)?,
+	};
+
+	Ok(app)
+}
+
 #[get("/apps/<app_slug>")]
 pub async fn app(app_slug: String, user: AuthUser, conn: DbConn) -> Result<Json<App>, Status> {
 	conn.run(move |c| {
-		use db_models::schema::apps::dsl::{apps, slug};
-		use db_models::schema::team_users::dsl::{team_users, user_id};
-		use db_models::schema::teams::dsl::teams;
+		let app = fetch_app(app_slug, user.id, c).map_err(|e| {
+			if e == NotFound {
+				Status::NotFound
+			} else {
+				Status::InternalServerError
+			}
+		})?;
 
-		let app = apps
-			.inner_join(teams.inner_join(team_users))
-			.filter(user_id.eq(user.id).and(slug.eq(app_slug)))
-			.first::<(App, (Team, TeamUser))>(c)
-			.map_err(|e| {
-				if e == NotFound {
-					Status::NotFound
-				} else {
-					Status::InternalServerError
-				}
-			})?;
-
-		Ok(Json(app.0))
+		Ok(Json(app))
 	})
 	.await
 }
@@ -106,23 +120,15 @@ pub async fn domains(
 	conn: DbConn,
 ) -> Result<Json<Vec<Domain>>, Status> {
 	conn.run(move |c| {
-		use db_models::schema::apps::dsl::{apps, slug};
-		use db_models::schema::team_users::dsl::{team_users, user_id};
-		use db_models::schema::teams::dsl::teams;
+		let app = fetch_app(app_slug, user.id, c).map_err(|e| {
+			if e == NotFound {
+				Status::NotFound
+			} else {
+				Status::InternalServerError
+			}
+		})?;
 
-		let app = apps
-			.inner_join(teams.inner_join(team_users))
-			.filter(user_id.eq(user.id).and(slug.eq(app_slug)))
-			.first::<(App, (Team, TeamUser))>(c)
-			.map_err(|e| {
-				if e == NotFound {
-					Status::NotFound
-				} else {
-					Status::InternalServerError
-				}
-			})?;
-
-		let domains = Domain::belonging_to(&app.0)
+		let domains = Domain::belonging_to(&app)
 			.load::<Domain>(c)
 			.map_err(|_| Status::InternalServerError)?;
 
@@ -153,23 +159,15 @@ pub async fn deploy(
 
 	let app = conn
 		.run(move |c| {
-			use db_models::schema::apps::dsl::{apps, slug};
-			use db_models::schema::team_users::dsl::{team_users, user_id};
-			use db_models::schema::teams::dsl::teams;
+			let app = fetch_app(app_slug, user.id, c).map_err(|e| {
+				if e == NotFound {
+					Status::NotFound
+				} else {
+					Status::InternalServerError
+				}
+			})?;
 
-			let app = apps
-				.inner_join(teams.inner_join(team_users))
-				.filter(user_id.eq(user.id).and(slug.eq(app_slug)))
-				.first::<(App, (Team, TeamUser))>(c)
-				.map_err(|e| {
-					if e == NotFound {
-						Status::NotFound
-					} else {
-						Status::InternalServerError
-					}
-				})?;
-
-			Ok(app.0)
+			Ok(app)
 		})
 		.await?;
 	// FIXME: Change to a 303 /builds/{id} once we have that route set up
