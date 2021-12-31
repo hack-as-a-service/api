@@ -40,6 +40,18 @@
         enableParallelBuilding = true;
         doCheck = false; # FIXME
       };
+      caddyfile = pkgs.writeText "Caddyfile" ''
+        {
+          debug
+          auto_https off
+          admin 0.0.0.0:2019 {
+            origins localhost:2019 127.0.0.1:2019 0.0.0.0:2019 *:2019
+          }
+        }
+        http://test.haas.hackclub.com {
+          respond "It works!"
+        }
+      '';
     in rec {
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
@@ -60,6 +72,8 @@
         ] ++ lib.optional (lib.hasSuffix "darwin" system) [
           darwin.apple_sdk.frameworks.Security
         ];
+        # save as env var
+        CADDYFILE_DEV = builtins.toString caddyfile;
       };
 
       packages.haas-api = pkgs.callPackage haasApiPackage { inherit system; };
