@@ -427,6 +427,31 @@ paths:
           description: App not found
         "401":
           description: Unauthorized
+  /builds/{id}:
+    get:
+      summary: Fetch a build
+      tags:
+        - Builds
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          example: 7
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+        "500":
+          description: Internal server error
+        "404":
+          description: Build not found
+        "401":
+          description: Unauthorized
   /domains/{id}/verify:
     post:
       summary: Attempt to verify a domain

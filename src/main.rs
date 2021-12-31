@@ -48,6 +48,7 @@ async fn rocket() -> _ {
 				api::apps::create,
 				api::apps::domains,
 				api::apps::deploy, // experimental - please do not use
+				api::builds::build,
 				api::dev::login,
 				api::domains::create,
 				api::domains::verify,
