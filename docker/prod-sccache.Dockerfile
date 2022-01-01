@@ -7,10 +7,10 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Note that we add wget here
-RUN apt-get update && apt-get install --yes libpq-dev wget
+RUN apt-get update && apt-get install --yes --no-install-recommends wget
 
 # Install sccache to greatly speedup builds in the CI
-RUN wget https://github.com/mozilla/sccache/releases/download/v0.2.15/sccache-v0.2.15-x86_64-unknown-linux-musl.tar.gz \
+RUN wget --progress=dot:giga https://github.com/mozilla/sccache/releases/download/v0.2.15/sccache-v0.2.15-x86_64-unknown-linux-musl.tar.gz \
     && tar xzf sccache-v0.2.15-x86_64-unknown-linux-musl.tar.gz \
     && mv sccache-v0.2.15-x86_64-unknown-linux-musl/sccache /usr/local/bin/sccache \
     && chmod +x /usr/local/bin/sccache
@@ -18,8 +18,7 @@ RUN wget https://github.com/mozilla/sccache/releases/download/v0.2.15/sccache-v0
 ENV RUSTC_WRAPPER=/usr/local/bin/sccache
 
 RUN --mount=type=secret,id=sccache_redis_uri \
-    export SCCACHE_REDIS="$(cat /run/secrets/sccache_redis_uri)" \
-    && cargo build --release
+    SCCACHE_REDIS="$(cat /run/secrets/sccache_redis_uri)" cargo build --release
 
 FROM debian:buster AS runner
 
