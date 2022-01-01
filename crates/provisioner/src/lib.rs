@@ -32,7 +32,7 @@ pub enum ProvisionerError {
 pub enum ProvisionerEvent {
 	GitClone(String),
 	DockerBuild(bollard::models::BuildInfo),
-	Deploy(ProvisionerDeployEvent),
+	Deploy(String),
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -56,12 +56,6 @@ pub enum ProvisionerDeployEvent {
 	DeletingOldContainer,
 	DeployEnd { app_id: i32, app_slug: String },
 	Other { log: String },
-}
-
-impl From<ProvisionerDeployEvent> for ProvisionerEvent {
-	fn from(ev: ProvisionerDeployEvent) -> Self {
-		Self::Deploy(ev)
-	}
 }
 
 pub use bollard;
@@ -90,6 +84,14 @@ impl DbRunner for PgConn {
 		f: Box<dyn for<'a> FnOnce(&'a mut PgConn) -> DieselResult<U> + Send + 'static>,
 	) -> DieselResult<U> {
 		f(self)
+	}
+}
+
+macro_rules! deploy_log {
+	($chan:ident, $($args:expr),+) => {
+		if let Some(chan) = &$chan {
+			chan.send(ProvisionerEvent::Deploy(format!($($args),+))).unwrap();
+		}
 	}
 }
 
@@ -257,16 +259,12 @@ impl Provisioner {
 		use db_models::schema::apps::dsl::{self as apps_dsl, apps, id};
 		use db_models::App;
 		let image_id = image_id_from_app_id(app_id);
-		if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::DeployBegin {
-					app_id,
-					image_id: image_id.clone(),
-				}
-				.into(),
-			)
-			.unwrap();
-		}
+		deploy_log!(
+			chan,
+			"Deploy begin with app id {}, image id {}",
+			app_id,
+			image_id
+		);
 		// 0. Inspect image for exposed port
 		let image_metadata = self.docker.inspect_image(&image_id).await?;
 		let port = image_metadata
@@ -281,15 +279,7 @@ impl Provisioner {
 			.and_then(|p| p.split('/').next().map(|s| s.to_owned()))
 			.and_then(|p| p.parse().ok())
 			.unwrap_or(80u16);
-		if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::Other {
-					log: format!("Will route traffic to container port {}", port),
-				}
-				.into(),
-			)
-			.unwrap();
-		}
+		deploy_log!(chan, "Will route traffic to container port {}", port);
 		let mut app = runner
 			.run(Box::new(move |c| {
 				apps.filter(id.eq(app_id)).first::<App>(c)
@@ -298,15 +288,7 @@ impl Provisioner {
 		// 1. Get or create the app network
 		let network_name = format!("haas_apps_{}", app_id);
 		if app.network_id.is_none() {
-			if let Some(chan) = &chan {
-				chan.send(
-					ProvisionerDeployEvent::CreatingNetwork {
-						network_name: network_name.clone(),
-					}
-					.into(),
-				)
-				.unwrap();
-			}
+			deploy_log!(chan, "Creating network with name {}", network_name);
 			app.network_id = Some(
 				self.docker
 					.create_network(bollard::network::CreateNetworkOptions {
@@ -318,22 +300,12 @@ impl Provisioner {
 					.id
 					.expect("Network create returns id"),
 			);
-			if let Some(chan) = &chan {
-				chan.send(
-					ProvisionerDeployEvent::CreatedNetwork {
-						network_id: app.network_id.as_ref().unwrap().clone(),
-					}
-					.into(),
-				)
-				.unwrap();
-				chan.send(
-					ProvisionerDeployEvent::Other {
-						log: "Adding caddy to the new network...".to_owned(),
-					}
-					.into(),
-				)
-				.unwrap();
-			}
+			deploy_log!(
+				chan,
+				"Created network with id {}",
+				app.network_id.as_ref().unwrap()
+			);
+			deploy_log!(chan, "Adding caddy to the new network...");
 			self.docker
 				.connect_network(
 					app.network_id.as_deref().unwrap(),
@@ -343,30 +315,17 @@ impl Provisioner {
 					},
 				)
 				.await?;
-			if let Some(chan) = &chan {
-				chan.send(
-					ProvisionerDeployEvent::Other {
-						log: "Added caddy to the new network".to_owned(),
-					}
-					.into(),
-				)
-				.unwrap();
-			}
-		} else if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::UsingExistingNetwork {
-					network_id: app.network_id.as_ref().unwrap().clone(),
-				}
-				.into(),
-			)
-			.unwrap();
+			deploy_log!(chan, "Added caddy to the new network");
+		} else {
+			deploy_log!(
+				chan,
+				"Using existing network with id {}",
+				app.network_id.as_ref().unwrap()
+			);
 		}
 		// Safe to unwrap: checked None case above
 		let network_id = app.network_id.as_deref().unwrap();
-		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::CreatingNewContainer.into())
-				.unwrap();
-		}
+		deploy_log!(chan, "Creating new container");
 		// 2. Create the new container, attached to the new network
 		let new_container = self
 			.docker
@@ -388,27 +347,14 @@ impl Provisioner {
 			)
 			.await?
 			.id;
-		if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::CreatedNewContainer {
-					container_id: new_container.clone(),
-				}
-				.into(),
-			)
-			.unwrap();
-			chan.send(ProvisionerDeployEvent::StartingNewContainer.into())
-				.unwrap();
-		}
+		deploy_log!(chan, "Created new container with id {}", new_container);
+		deploy_log!(chan, "Starting new container");
 		// 2.b. Start the new container
 		self.docker
 			.start_container::<&str>(&new_container, None)
 			.await?;
-		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::StartedNewContainer.into())
-				.unwrap();
-			chan.send(ProvisionerDeployEvent::RetrievingContainerIP.into())
-				.unwrap();
-		}
+		deploy_log!(chan, "Started new container");
+		deploy_log!(chan, "Retrieving container IP...");
 		// 2.c. Get the container's IP
 		let new_container_info = self.docker.inspect_container(&new_container, None).await?;
 		let new_container_ip = {
@@ -430,17 +376,8 @@ impl Provisioner {
 			})?;
 			Ok::<_, ProvisionerError>(ip.split('/').next().unwrap().to_string())
 		}?;
-		if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::RetrievedContainerIP {
-					container_ip: new_container_ip.clone(),
-				}
-				.into(),
-			)
-			.unwrap();
-			chan.send(ProvisionerDeployEvent::AddingNewContainerAsUpstream.into())
-				.unwrap();
-		}
+		deploy_log!(chan, "Retrieved container IP: {}", new_container_ip);
+		deploy_log!(chan, "Adding new container as upstream...");
 		let upstream = format!("{}:{}", new_container_ip, port);
 		//let upstreams_id = format!("haas_apps_{}_upstreams", app_slug);
 		let route_id = format!("haas_apps_{}_route", app_id);
@@ -461,21 +398,18 @@ impl Provisioner {
 		} {
 			// Config updated, good
 			Ok(_) => {
-				//info!("Updated upstreams");
+				deploy_log!(chan, "Updated upstreams");
 			}
 			// FIXME: more exact error checking
 			// Upstream does not seem to exist... add a new one
-			Err(_) => {
+			Err(e) => {
 				use caddy::types::*;
-				if let Some(chan) = &chan {
-					chan.send(
-						ProvisionerDeployEvent::CreatingNewRoute {
-							route_id: route_id.clone(),
-						}
-						.into(),
-					)
-					.unwrap();
-				}
+				deploy_log!(
+					chan,
+					"Got error {:?}, creating new route with id {}",
+					e,
+					route_id
+				);
 				// FIXME: using a static path to routes
 				let handle = self
 					.caddy
@@ -506,18 +440,15 @@ impl Provisioner {
 				};
 				//info!("Route: {:?}", route);
 				handle.post(&route).await?;
-				//info!("Created route with upstreams");
+				deploy_log!(chan, "Created new route with upstreams");
 			}
 		}
-		//info!("Waiting 5 seconds for container to be up (FIXME)");
+		deploy_log!(chan, "FIXME: Waiting 5 seconds for container to be up");
 		// 4. Wait 5 seconds or something idk for the new container to be up
 		// FIXME
 		tokio::time::sleep(tokio::time::Duration::from_millis(5000)).await;
 		// 5. Replace the upstreams list with only the new container ID
-		if let Some(chan) = &chan {
-			chan.send(ProvisionerDeployEvent::RemovingOldContainerAsUpstream.into())
-				.unwrap();
-		}
+		deploy_log!(chan, "Removing old container as upstream...");
 		let handle =
 			self.caddy
 				.config_by_id(&route_id)
@@ -528,28 +459,20 @@ impl Provisioner {
 				..Default::default()
 			}])
 			.await?;
-		//info!("Updated upstreams");
+		deploy_log!(chan, "Updated upstreams");
 		if let Some(old_container_id) = &app.container_id {
-			if let Some(chan) = &chan {
-				chan.send(
-					ProvisionerDeployEvent::StoppingOldContainer {
-						container_id: old_container_id.clone(),
-					}
-					.into(),
-				)
-				.unwrap();
-			}
+			deploy_log!(chan, "Stopping old container with id {}", old_container_id);
 			self.docker.stop_container(old_container_id, None).await?;
-			if let Some(chan) = &chan {
-				chan.send(ProvisionerDeployEvent::DeletingOldContainer.into())
-					.unwrap();
-			}
+			deploy_log!(chan, "Deleting old container");
 			self.docker.remove_container(old_container_id, None).await?;
 		} else {
-			//info!("None found");
+			deploy_log!(chan, "No old container found to remove");
 		}
 		// 6. Done! Save the new container id / network id back to the db and return success
-		//info!("Updating database with new container and network ID");
+		deploy_log!(
+			chan,
+			"Updating database with new container and network ID..."
+		);
 		app.container_id = Some(new_container);
 		runner
 			.run(Box::new({
@@ -564,17 +487,13 @@ impl Provisioner {
 				}
 			}))
 			.await?;
-		//info!("Updated database with new container and network ID");
-		if let Some(chan) = &chan {
-			chan.send(
-				ProvisionerDeployEvent::DeployEnd {
-					app_id,
-					app_slug: app.slug.clone(),
-				}
-				.into(),
-			)
-			.unwrap();
-		}
+		deploy_log!(chan, "Updated database with new container and network ID");
+		deploy_log!(
+			chan,
+			"Successful deploy for app with id {}, slug {}",
+			app_id,
+			app.slug
+		);
 		Ok(())
 	}
 }
