@@ -1639,8 +1639,7 @@ dependencies = [
 [[package]]
 name = "rocket_sync_db_pools"
 version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38cfdfebd552d075c368e641c88a5cd6ce1c58c5c710548aeb777abb48830f4b"
+source = "git+https://github.com/threema-danilo/Rocket?rev=f95b7126760728e76b3be39721f59f466b988bd2#f95b7126760728e76b3be39721f59f466b988bd2"
 dependencies = [
  "diesel",
  "r2d2",
@@ -1653,8 +1652,7 @@ dependencies = [
 [[package]]
 name = "rocket_sync_db_pools_codegen"
 version = "0.1.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5267808c094db5366e1d8925aaf9f2ce05ff9b3bd92cb18c7040a1fe219c2e25"
+source = "git+https://github.com/threema-danilo/Rocket?rev=f95b7126760728e76b3be39721f59f466b988bd2#f95b7126760728e76b3be39721f59f466b988bd2"
 dependencies = [
  "devise",
  "quote",

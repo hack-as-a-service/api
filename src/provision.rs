@@ -26,16 +26,16 @@ impl ProvisionerEvent2 {
 	}
 }
 
-struct PooledDbRunner {
-	c: Arc<DbConn>,
+struct PooledDbRunner<'a> {
+	c: &'a DbConn,
 }
 
 #[rocket::async_trait]
-impl provisioner::DbRunner for &PooledDbRunner {
+impl<'a> provisioner::DbRunner for &PooledDbRunner<'a> {
 	async fn run<U: Send + 'static>(
 		&mut self,
 		f: Box<
-			dyn for<'a> FnOnce(&'a mut PgConnection) -> Result<U, diesel::result::Error>
+			dyn for<'b> FnOnce(&'b mut PgConnection) -> Result<U, diesel::result::Error>
 				+ Send
 				+ 'static,
 		>,
@@ -72,7 +72,7 @@ impl ProvisionerManager {
 
 	pub async fn create_build(
 		&mut self,
-		conn: Arc<DbConn>,
+		conn: DbConn,
 		git_uri: Uri,
 		app_id: i32,
 		app_slug: &str,
@@ -89,38 +89,30 @@ impl ProvisionerManager {
 			.await?;
 		let build_id = build.id;
 		let (tx, mut rx) = broadcast::channel(10);
-		let conn2 = Arc::clone(&conn);
+		let pool = conn.get_pool();
 		// Receive build events and append them to the db
 		tokio::spawn(async move {
+			let conn = pool.get().unwrap();
 			loop {
 				match rx.recv().await {
 					Ok(ev) => {
-						// please don't add overhead please don't add
-						// overhead
+						use db_models::schema::builds::dsl::{events, id};
+						use diesel::{dsl::sql, sql_types::Text};
+
+						// please don't add overhead please don't add overhead
 						if let Ok(debug_ev) = serde_json::to_string(&ev) {
 							println!("debug: build {} event: {}", build_id, debug_ev);
 						}
-						conn2
-							.run(move |c| {
-								use db_models::schema::builds::dsl::{events, id};
-								use diesel::{dsl::sql, sql_types::Text};
 
-								let q = diesel::update(builds).filter(id.eq(build_id)).set(
-									// diesel doesn't have a
-									// query builder for
-									// array_append
-									events.eq(sql("array_append(events, ")
-										.bind::<Text, _>(serde_json::to_string(&ev).unwrap())
-										.sql(")")),
-								);
-								#[cfg(debug_assertions)]
-								println!(
-									"query = {}",
-									diesel::debug_query::<diesel::pg::Pg, _>(&q)
-								);
-								q.execute(c).unwrap();
-							})
-							.await;
+						let q = diesel::update(builds).filter(id.eq(build_id)).set(
+							// diesel doesn't have a query builder for array_append
+							events.eq(sql("array_append(events, ")
+								.bind::<Text, _>(serde_json::to_string(&ev).unwrap())
+								.sql(")")),
+						);
+						#[cfg(debug_assertions)]
+						println!("query = {}", diesel::debug_query::<diesel::pg::Pg, _>(&q));
+						q.execute(&conn).unwrap();
 					}
 					Err(broadcast::error::RecvError::Closed) => break,
 					_ => {}
@@ -145,7 +137,7 @@ impl ProvisionerManager {
 						}
 					}
 				});
-				let runner = PooledDbRunner { c: conn.clone() };
+				let runner = PooledDbRunner { c: &conn };
 				let br = provisioner
 					.build_image_from_github(app_id, &app_slug, &git_uri, Some(tx2.clone()))
 					.await;

@@ -185,7 +185,6 @@ pub async fn deploy(
 		return Ok((Status::Ok, Json(existing_build)));
 	}
 	let mut provisioner_manager = provisioner_manager.write().await;
-	let conn = std::sync::Arc::new(conn);
 	let new_build = provisioner_manager
 		.create_build(conn, deploy.git_repository.clone(), app.id, &app.slug)
 		.await
