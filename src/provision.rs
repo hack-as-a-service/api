@@ -126,17 +126,6 @@ impl ProvisionerManager {
 					_ => {}
 				}
 			}
-			conn2
-				.run(move |c| {
-					use db_models::schema::builds::dsl::{ended_at, id};
-
-					diesel::update(builds)
-						.filter(id.eq(build_id))
-						.set(ended_at.eq(chrono::Utc::now().naive_utc()))
-						.execute(c)
-						.unwrap();
-				})
-				.await;
 		});
 		let (tx2, mut rx2) = broadcast::channel(10);
 		// Start the build / deploy
@@ -163,14 +152,25 @@ impl ProvisionerManager {
 				if let Err(e) = br {
 					tx.send(ProvisionerEvent2::make(Err(e.to_string())))
 						.unwrap();
+				} else {
+					let dr = provisioner
+						.deploy_app(app_id, &mut &runner, Some(tx2.clone()))
+						.await;
+					if let Err(e) = dr {
+						tx.send(ProvisionerEvent2::make(Err(e.to_string())))
+							.unwrap();
+					}
 				}
-				let dr = provisioner
-					.deploy_app(app_id, &mut &runner, Some(tx2.clone()))
-					.await;
-				if let Err(e) = dr {
-					tx.send(ProvisionerEvent2::make(Err(e.to_string())))
+				conn.run(move |c| {
+					use db_models::schema::builds::dsl::{ended_at, id};
+
+					diesel::update(builds)
+						.filter(id.eq(build_id))
+						.set(ended_at.eq(chrono::Utc::now().naive_utc()))
+						.execute(c)
 						.unwrap();
-				}
+				})
+				.await;
 			}
 		});
 		self.event_channels.insert(build.id, tx);
