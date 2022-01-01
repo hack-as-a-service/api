@@ -270,12 +270,7 @@ impl Provisioner {
 		let port = image_metadata
 			.config
 			.and_then(|c| c.exposed_ports)
-			.and_then(|p| {
-				p.into_iter()
-					.map(|(p, _)| p)
-					.filter(|p| p.ends_with("tcp"))
-					.next()
-			})
+			.and_then(|p| p.into_iter().map(|(p, _)| p).find(|p| p.ends_with("tcp")))
 			.and_then(|p| p.split('/').next().map(|s| s.to_owned()))
 			.and_then(|p| p.parse().ok())
 			.unwrap_or(80u16);
