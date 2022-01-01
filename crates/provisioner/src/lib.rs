@@ -461,10 +461,29 @@ impl Provisioner {
 			.await?;
 		deploy_log!(chan, "Updated upstreams");
 		if let Some(old_container_id) = &app.container_id {
+			use bollard::errors::Error as DockerError;
 			deploy_log!(chan, "Stopping old container with id {}", old_container_id);
-			self.docker.stop_container(old_container_id, None).await?;
+			match self.docker.stop_container(old_container_id, None).await {
+				Err(
+					DockerError::DockerResponseNotFoundError { .. }
+					| DockerError::DockerResponseNotModifiedError { .. },
+				) => {
+					log::info!("Old container did not exist / already stopped, ignoring");
+				}
+				e @ Err(_) => return e.map_err(Into::into),
+				_ => {}
+			}
 			deploy_log!(chan, "Deleting old container");
-			self.docker.remove_container(old_container_id, None).await?;
+			match self.docker.remove_container(old_container_id, None).await {
+				Err(
+					DockerError::DockerResponseNotFoundError { .. }
+					| DockerError::DockerResponseNotModifiedError { .. },
+				) => {
+					log::info!("Old container did not exist, ignoring");
+				}
+				e @ Err(_) => return e.map_err(Into::into),
+				_ => {}
+			}
 		} else {
 			deploy_log!(chan, "No old container found to remove");
 		}
