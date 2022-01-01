@@ -43,10 +43,12 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
-          file: docker/prod.Dockerfile
+          file: docker/prod-sccache.Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          secrets: |
+            "sccache_redis_uri=${{ secrets.SCCACHE_REDIS_URI }}"
   migrator:
     name: Migrator
     runs-on: ubuntu-latest
