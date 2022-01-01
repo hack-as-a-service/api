@@ -267,6 +267,29 @@ impl Provisioner {
 			)
 			.unwrap();
 		}
+		// 0. Inspect image for exposed port
+		let image_metadata = self.docker.inspect_image(&image_id).await?;
+		let port = image_metadata
+			.config
+			.and_then(|c| c.exposed_ports)
+			.and_then(|p| {
+				p.into_iter()
+					.map(|(p, _)| p)
+					.filter(|p| p.ends_with("tcp"))
+					.next()
+			})
+			.and_then(|p| p.split('/').next().map(|s| s.to_owned()))
+			.and_then(|p| p.parse().ok())
+			.unwrap_or(80u16);
+		if let Some(chan) = &chan {
+			chan.send(
+				ProvisionerDeployEvent::Other {
+					log: format!("Will route traffic to container port {}", port),
+				}
+				.into(),
+			)
+			.unwrap();
+		}
 		let mut app = runner
 			.run(Box::new(move |c| {
 				apps.filter(id.eq(app_id)).first::<App>(c)
@@ -418,8 +441,7 @@ impl Provisioner {
 			chan.send(ProvisionerDeployEvent::AddingNewContainerAsUpstream.into())
 				.unwrap();
 		}
-		// FIXME: currently we assume the port is 80
-		let upstream = format!("{}:80", new_container_ip);
+		let upstream = format!("{}:{}", new_container_ip, port);
 		//let upstreams_id = format!("haas_apps_{}_upstreams", app_slug);
 		let route_id = format!("haas_apps_{}_route", app_id);
 		// 3. Update the Caddy upstreams to include the new container upstream
