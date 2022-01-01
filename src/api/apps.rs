@@ -151,12 +151,6 @@ pub async fn deploy(
 	conn: DbConn,
 	provisioner_manager: &State<RwLock<ProvisionerManager>>,
 ) -> Result<(Status, Json<Build>), Status> {
-	#[cfg(not(debug_assertions))]
-	{
-		println!("someone tried to deploy in prod, pls no");
-		return Err(Status::ServiceUnavailable);
-	}
-
 	let app = conn
 		.run(move |c| {
 			let app = fetch_app(app_slug, user.id, c).map_err(|e| {
