@@ -16,7 +16,7 @@ pub fn into_slug(text: &str, randomize: bool) -> String {
 	}
 
 	let slug = INVALID_REGEX
-		.replace_all(&text.trim().to_lowercase().replace(" ", "-"), "")
+		.replace_all(&text.trim().to_lowercase().replace(' ', "-"), "")
 		.to_string();
 
 	if randomize {

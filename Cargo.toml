@@ -40,7 +40,7 @@ git = "https://github.com/threema-danilo/Rocket"
 rev = "f95b7126760728e76b3be39721f59f466b988bd2"
 
 [patch."https://github.com/threema-danilo/Rocket"]
-rocket = {version="0.5.0-rc.1"}
+rocket = {version = "0.5.0-rc.1"}
 
 [workspace]
 members = [

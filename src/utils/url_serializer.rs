@@ -25,5 +25,5 @@ pub fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Url, D::Error> {
 }
 
 pub fn serialize<S: Serializer>(url: &Url, ser: S) -> Result<S::Ok, S::Error> {
-	ser.serialize_str(&url.to_string())
+	ser.serialize_str(url.as_ref())
 }
