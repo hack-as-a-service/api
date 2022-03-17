@@ -47,7 +47,7 @@ jobs:
         run: cargo clippy -- -D warnings
   lint-docker:
     runs-on: ubuntu-latest
-    container: hadolint/hadolint:latest-debian
+    container: hadolint/hadolint:2.9.1-debian
     name: Lint (Dockerfile)
     steps:
       - name: Checkout repository
