@@ -15,7 +15,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: "1.59.0"
           components: rustfmt
       - name: Format
         run: cargo fmt -- --check
@@ -28,7 +28,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.59.0"
       - name: Build
         run: cargo build
   lint:
@@ -41,13 +41,13 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: "1.59.0"
           components: clippy
       - name: Lint
         run: cargo clippy -- -D warnings
   lint-docker:
     runs-on: ubuntu-latest
-    container: hadolint/hadolint:v2.8.0-debian
+    container: hadolint/hadolint:v2.9.1-debian
     name: Lint (Dockerfile)
     steps:
       - name: Checkout repository
