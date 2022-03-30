@@ -32,6 +32,8 @@ provisioner = {package = "haas_provisioner", path = "crates/provisioner"}
 
 jsonwebtoken = "7.2.0"
 
+sentry = "0.25.0"
+
 [dependencies.rocket_sync_db_pools]
 default-features = false
 features = ["diesel_postgres_pool"]
