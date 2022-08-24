@@ -58,6 +58,13 @@ table! {
 }
 
 table! {
+  invites (team_id, user_id) {
+    user_id -> Int4,
+    team_id -> Int4,
+  }
+}
+
+table! {
 	teams (id) {
 		id -> Int4,
 		created_at -> Timestamp,
@@ -100,6 +107,8 @@ joinable!(oauth_device_requests -> oauth_apps (oauth_app_id));
 joinable!(oauth_device_requests -> tokens (token));
 joinable!(team_users -> teams (team_id));
 joinable!(team_users -> users (user_id));
+joinable!(invites -> teams (team_id));
+joinable!(invites -> users (user_id));
 joinable!(tokens -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
