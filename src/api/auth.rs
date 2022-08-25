@@ -13,6 +13,8 @@ use time::Duration;
 
 use db_models::{NewTeam, NewToken, NewUser, Team, TeamUser, Token, User};
 
+use nanoid::nanoid;
+
 use crate::{
 	slack::{exchange_code, parse_id_token},
 	utils::{slug::into_slug, token::generate_token},
@@ -150,12 +152,14 @@ pub async fn code(
 						.get_result::<User>(c)?;
 
 					// Create the user's personal team
+
 					let team = diesel::insert_into(teams)
 						.values(&NewTeam {
 							name: Some(format!("{}'s team", info.name)),
 							slug: into_slug(&info.name, true),
 							avatar: None,
 							personal: true,
+              invite: nanoid!(7),
 						})
 						.get_result::<Team>(c)?;
 

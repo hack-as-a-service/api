@@ -9,6 +9,8 @@ use rocket::{
 use diesel::prelude::*;
 use time::Duration;
 
+use nanoid::nanoid;
+
 use crate::{
 	utils::{slug::into_slug, token::generate_token},
 	DbConn,
@@ -47,6 +49,7 @@ pub async fn login(conn: DbConn, cookies: &CookieJar<'_>) -> Result<Redirect, St
 							slug: into_slug(&user.name, true),
 							avatar: None,
 							personal: true,
+              invite: nanoid!(7),
 						})
 						.get_result::<Team>(c)?;
 
