@@ -59,6 +59,7 @@ async fn rocket() -> _ {
 				api::oauth::token,
 				api::teams::apps,
 				api::teams::create,
+				api::teams::invite,
 				api::teams::delete,
 				api::teams::team,
 				api::teams::update,

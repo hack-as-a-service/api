@@ -33,6 +33,14 @@ fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> Quer
 	Ok(team)
 }
 
+/// Fetches a team by its unique invite ID, which is automatically generated on creation
+fn fetch_team_by_invite(invite_id: String, c: &diesel::PgConnection) -> QueryResult<Team> {
+	use db_models::schema::teams::dsl::*;
+	let team = teams.filter(invite.eq(invite_id)).first::<Team>(c);
+
+	Ok(team.map(|x| x)?)
+}
+
 #[post("/teams", data = "<team>")]
 pub async fn create(
 	user: AuthUser,
@@ -67,6 +75,32 @@ pub async fn create(
 			.map_err(|_| Status::InternalServerError)?;
 
 		Ok(Json(created_team))
+	})
+	.await
+}
+
+#[post("/teams/invite/<invite_id>")]
+pub async fn invite(invite_id: String, user: AuthUser, conn: DbConn) -> Result<Json<Team>, Status> {
+	conn.run(move |c| {
+		use db_models::schema::team_users::dsl::*;
+
+		let team = fetch_team_by_invite(invite_id, c).map_err(|e| {
+			if e == NotFound {
+				Status::NotFound
+			} else {
+				Status::InternalServerError
+			}
+		})?;
+
+		diesel::insert_into(team_users)
+			.values(&TeamUser {
+				team_id: team.id,
+				user_id: user.id,
+			})
+			.execute(c)
+			.map_err(|_| Status::InternalServerError)?;
+
+		Ok(Json(team))
 	})
 	.await
 }
