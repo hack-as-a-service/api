@@ -12,11 +12,12 @@ use db_models::{App, NewTeam, Team, TeamUser, UpdatedTeam, User};
 
 use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
 
+use nanoid::nanoid;
+
 /// Fetches a team by the `slug`, which can either be a Team.slug or a numeric Team.id
 fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> QueryResult<Team> {
 	use db_models::schema::team_users;
 	use db_models::schema::teams::dsl::*;
-
 	// Attempt to parse out a numeric ID
 	let team = match team_slug.parse::<i32>() {
 		Ok(i) => teams
@@ -47,6 +48,8 @@ pub async fn create(
 	conn.run(move |c| {
 		use db_models::schema::team_users::dsl::*;
 		use db_models::schema::teams::dsl::*;
+
+    let inv_id = nanoid!(7);
 
 		let created_team = diesel::insert_into(teams)
 			.values(team.0)

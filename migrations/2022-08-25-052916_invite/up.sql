@@ -1,0 +1,3 @@
+-- Your SQL goes here
+ALTER TABLE teams
+ADD COLUMN invite TEXT NOT NULL UNIQUE 
