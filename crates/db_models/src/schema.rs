@@ -58,10 +58,10 @@ table! {
 }
 
 table! {
-  invites (team_id, user_id) {
-    user_id -> Int4,
-    team_id -> Int4,
-  }
+	invites (team_id, user_id) {
+		user_id -> Int4,
+		team_id -> Int4,
+	}
 }
 
 table! {

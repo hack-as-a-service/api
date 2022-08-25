@@ -15,7 +15,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.59.0"
+          toolchain: "1.61.0"
           components: rustfmt
       - name: Format
         run: cargo fmt -- --check
@@ -28,7 +28,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: "1.59.0"
+          toolchain: "1.61.0"
       - name: Build
         run: cargo build
   lint:
@@ -41,7 +41,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.59.0"
+          toolchain: "1.61.0"
           components: clippy
       - name: Lint
         run: cargo clippy -- -D warnings
