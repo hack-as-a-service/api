@@ -49,7 +49,7 @@ pub async fn login(conn: DbConn, cookies: &CookieJar<'_>) -> Result<Redirect, St
 							slug: into_slug(&user.name, true),
 							avatar: None,
 							personal: true,
-              invite: nanoid!(7),
+							invite: nanoid!(7),
 						})
 						.get_result::<Team>(c)?;
 

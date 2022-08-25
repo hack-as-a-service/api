@@ -159,7 +159,7 @@ pub async fn code(
 							slug: into_slug(&info.name, true),
 							avatar: None,
 							personal: true,
-              invite: nanoid!(7),
+							invite: nanoid!(7),
 						})
 						.get_result::<Team>(c)?;
 
