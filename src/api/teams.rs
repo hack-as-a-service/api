@@ -79,7 +79,7 @@ pub async fn create(
 	.await
 }
 
-#[post("/teams/invite/<invite_id>")]
+#[post("/teams/<invite_id>/invite")]
 pub async fn invite(invite_id: String, user: AuthUser, conn: DbConn) -> Result<Json<Team>, Status> {
 	conn.run(move |c| {
 		use db_models::schema::team_users::dsl::*;
