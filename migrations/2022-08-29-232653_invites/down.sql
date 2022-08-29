@@ -1,2 +1,2 @@
 -- This file should undo anything in `up.sql`
-ALTER TABLE teams DROP COLUMN invite
+DROP TABLE team_users

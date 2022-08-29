@@ -30,6 +30,13 @@ table! {
 }
 
 table! {
+	invites (team_id, user_id) {
+		user_id -> Int4,
+		team_id -> Int4,
+	}
+}
+
+table! {
 	oauth_apps (client_id) {
 		client_id -> Text,
 		name -> Text,
@@ -65,7 +72,6 @@ table! {
 		avatar -> Nullable<Text>,
 		personal -> Bool,
 		slug -> Text,
-		invite -> Text,
 	}
 }
 
@@ -97,6 +103,8 @@ table! {
 joinable!(apps -> teams (team_id));
 joinable!(builds -> apps (app_id));
 joinable!(domains -> apps (app_id));
+joinable!(invites -> teams (team_id));
+joinable!(invites -> users (user_id));
 joinable!(oauth_device_requests -> oauth_apps (oauth_app_id));
 joinable!(oauth_device_requests -> tokens (token));
 joinable!(team_users -> teams (team_id));
@@ -107,6 +115,7 @@ allow_tables_to_appear_in_same_query!(
 	apps,
 	builds,
 	domains,
+	invites,
 	oauth_apps,
 	oauth_device_requests,
 	team_users,
