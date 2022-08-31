@@ -11,7 +11,6 @@ pub struct Team {
 	pub avatar: Option<String>,
 	pub personal: bool,
 	pub slug: String,
-	pub invite: String,
 }
 
 #[derive(Clone, Debug, Insertable, Deserialize)]
