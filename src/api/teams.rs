@@ -33,14 +33,6 @@ fn fetch_team(team_slug: String, user_id: i32, c: &diesel::PgConnection) -> Quer
 	Ok(team)
 }
 
-/// Fetches a team by its unique invite ID, which is automatically generated on creation
-fn fetch_team_by_invite(invite_id: String, c: &diesel::PgConnection) -> QueryResult<Team> {
-	use db_models::schema::teams::dsl::*;
-	let team = teams.filter(invite.eq(invite_id)).first::<Team>(c);
-
-	Ok(team.map(|x| x)?)
-}
-
 #[post("/teams", data = "<team>")]
 pub async fn create(
 	user: AuthUser,

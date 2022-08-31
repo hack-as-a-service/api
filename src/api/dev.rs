@@ -9,8 +9,6 @@ use rocket::{
 use diesel::prelude::*;
 use time::Duration;
 
-use nanoid::nanoid;
-
 use crate::{
 	utils::{slug::into_slug, token::generate_token},
 	DbConn,
