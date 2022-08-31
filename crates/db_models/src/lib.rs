@@ -21,5 +21,7 @@ mod user;
 pub use user::*;
 mod whitelist;
 pub use whitelist::*;
+mod invite;
+pub use invite::*;
 
 pub mod schema;

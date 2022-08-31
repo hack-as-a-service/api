@@ -1,5 +1,5 @@
 use serde::Serialize;
-use crate::schema::team_users;
+use crate::schema::invites;
 use crate::{team::Team, user::User};
 
 #[derive(Clone, Debug, Queryable, Serialize, Identifiable, Associations, Insertable)]
