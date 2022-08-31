@@ -13,7 +13,6 @@ use time::Duration;
 
 use db_models::{NewTeam, NewToken, NewUser, Team, TeamUser, Token, User};
 
-
 use crate::{
 	slack::{exchange_code, parse_id_token},
 	utils::{slug::into_slug, token::generate_token},

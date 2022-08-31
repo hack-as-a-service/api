@@ -8,7 +8,9 @@ use diesel::{
 };
 use rocket::{http::Status, response::status::NoContent, serde::json::Json};
 
-use db_models::{App, NewTeam, Team, TeamUser, UpdatedTeam, User, Invite};
+use db_models::{
+	schema::invites, App, Invite, NewInvite, NewTeam, Team, TeamUser, UpdatedTeam, User,
+};
 
 use crate::{auth::AuthUser, utils::slug::validate_slug, DbConn};
 
@@ -71,10 +73,27 @@ pub async fn create(
 	.await
 }
 
-#[post("/teams/invite")]
-pub async fn invite(user: AuthUser, invite: Json<Invite>, conn: DbConn) -> Result<Json<Team>, Status> {
+#[post("/teams/invite", data = "<invite>")]
+pub async fn invite(
+	user: AuthUser,
+	invite: Json<NewInvite>,
+	conn: DbConn,
+) -> Result<Json<Invite>, Status> {
 	conn.run(move |c| {
+		use db_models::schema::invites::dsl::*;
 
+		let created_invite = diesel::insert_into(invites)
+			.values(invite.0)
+			.get_result::<Invite>(c)
+			.map_err(|e| {
+				if let DatabaseError(UniqueViolation, _) = e {
+					Status::Conflict
+				} else {
+					Status::InternalServerError
+				}
+			})?;
+
+		Ok(Json(created_invite))
 	})
 	.await
 }
