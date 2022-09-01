@@ -59,13 +59,14 @@ async fn rocket() -> _ {
 				api::oauth::token,
 				api::teams::apps,
 				api::teams::create,
-				api::teams::invite,
 				api::teams::delete,
 				api::teams::team,
 				api::teams::update,
 				api::teams::users,
 				api::users::me,
-				api::users::teams
+				api::users::teams,
+				api::invites::create,
+				api::invites::fetch,
 			],
 		)
 		.attach(DbConn::fairing())
