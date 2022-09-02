@@ -66,7 +66,7 @@ async fn rocket() -> _ {
 				api::users::me,
 				api::users::teams,
 				api::invites::create,
-				api::invites::fetch,
+				api::invites::get,
 			],
 		)
 		.attach(DbConn::fairing())

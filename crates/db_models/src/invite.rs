@@ -16,6 +16,8 @@ pub struct Invite {
 #[derive(Clone, Debug, Insertable, Deserialize)]
 #[table_name = "invites"]
 pub struct NewInvite {
-	pub user_id: i32,
 	pub team_id: i32,
 }
+
+#[derive(Clone, Debug,, Deserialize)]
+pub struct DeleteInvite {}

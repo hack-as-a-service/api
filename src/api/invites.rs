@@ -6,14 +6,14 @@ use diesel::{
 		Error::{DatabaseError, NotFound},
 	},
 };
-use rocket::{http::Status, serde::json::Json};
+use rocket::{http::Status, response::status::NoContent, serde::json::Json};
 
 use db_models::{Invite, NewInvite, Team};
 
 use crate::{auth::AuthUser, DbConn};
 
 #[get("/teams/invite")]
-pub async fn fetch(user: AuthUser, conn: DbConn) -> Result<Json<Vec<Team>>, Status> {
+pub async fn get(user: AuthUser, conn: DbConn) -> Result<Json<Vec<Team>>, Status> {
 	conn.run(move |c| {
 		use db_models::schema::invites::dsl::*;
 		use db_models::schema::teams::dsl::teams;
@@ -40,7 +40,10 @@ pub async fn create(
 		use db_models::schema::invites::dsl::*;
 
 		let created_invite = diesel::insert_into(invites)
-			.values(invite.0)
+			.values(&Invite {
+				team_id: invite.0.team_id,
+				user_id: user.id,
+			})
 			.get_result::<Invite>(c)
 			.map_err(|e| {
 				if let DatabaseError(UniqueViolation, _) = e {
@@ -51,6 +54,27 @@ pub async fn create(
 			})?;
 
 		Ok(Json(created_invite))
+	})
+	.await
+}
+
+// Used to revoke team invites
+#[delete("/teams/invite/<id>/delete")]
+pub async fn delete(id: String, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
+	use db_models::schema::invites::dsl::{invites, team_id, user_id};
+	conn.run(move |c| {
+		let result = diesel::delete(invites.filter(user_id).eq(user.id).and(team_id.eq(id)))
+			.execute(c)
+			.map_err(|e| {
+				println!("{:?}", e);
+				if let DatabaseError(ForeignKeyViolation, _) = e {
+					Status::Conflict
+				} else {
+					Status::InternalServerError
+				}
+			})?;
+
+		Ok(NoContent)
 	})
 	.await
 }
