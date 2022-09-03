@@ -18,6 +18,3 @@ pub struct Invite {
 pub struct NewInvite {
 	pub team_id: i32,
 }
-
-#[derive(Clone, Debug,, Deserialize)]
-pub struct DeleteInvite {}
