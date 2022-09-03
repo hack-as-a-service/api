@@ -67,6 +67,7 @@ async fn rocket() -> _ {
 				api::users::teams,
 				api::invites::get,
 				api::invites::create,
+        api::invites::accept,
 				api::invites::delete,
 			],
 		)

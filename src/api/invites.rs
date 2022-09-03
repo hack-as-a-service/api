@@ -8,7 +8,7 @@ use diesel::{
 };
 use rocket::{http::Status, response::status::NoContent, serde::json::Json};
 
-use db_models::{Invite, NewInvite, Team};
+use db_models::{Invite, NewInvite, Team, TeamUser};
 
 use crate::{auth::AuthUser, DbConn};
 
@@ -60,7 +60,7 @@ pub async fn create(
 
 // Used to accept team invites
 #[delete("/teams/invite/<id>/accept")]
-pub async fn accept(id: String, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
+pub async fn accept(id: i32, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
 	use db_models::schema::invites::dsl::{invites, team_id, user_id};
 	use db_models::schema::team_users::dsl::*;
 
@@ -73,7 +73,7 @@ pub async fn accept(id: String, user: AuthUser, conn: DbConn) -> Result<NoConten
 			.execute(c)
 			.map_err(|_| Status::InternalServerError)?;
 
-		diesel::delete(invites.filter(user_id).eq(user.id).and(team_id.eq(id)))
+		diesel::delete(invites.filter(user_id.eq(user.id).and(team_id.eq(id))))
 			.execute(c)
 			.map_err(|e| {
 				println!("{:?}", e);
@@ -91,10 +91,10 @@ pub async fn accept(id: String, user: AuthUser, conn: DbConn) -> Result<NoConten
 
 // Used to revoke team invites
 #[delete("/teams/invite/<id>/delete")]
-pub async fn delete(id: String, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
+pub async fn delete(id: i32, user: AuthUser, conn: DbConn) -> Result<NoContent, Status> {
 	use db_models::schema::invites::dsl::{invites, team_id, user_id};
 	conn.run(move |c| {
-		let result = diesel::delete(invites.filter(user_id).eq(user.id).and(team_id.eq(id)))
+		diesel::delete(invites.filter(user_id.eq(user.id).and(team_id.eq(id))))
 			.execute(c)
 			.map_err(|e| {
 				println!("{:?}", e);
