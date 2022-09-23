@@ -7,7 +7,7 @@ use trust_dns_client::{
 };
 
 lazy_static! {
-	static ref DOMAIN_REGEX: Regex = Regex::new("^([A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,6}$").unwrap();
+	static ref DOMAIN_REGEX: Regex = Regex::new("^([A-Za-z0-9-]{1,63}\\.)+[A-Za-z]{2,}$").unwrap();
 }
 
 pub fn validate_domain(domain: &str) -> bool {
